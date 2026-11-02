@@ -1,0 +1,34 @@
+# Decisions and open questions
+
+## Decided (design stage, November 2026)
+
+| Topic | Decision |
+| --- | --- |
+| Chain | Bitcoin only; no tokens, no token-weighted voting, no function calls |
+| Model | One DAO per codebase; each DAO forks this repo. A separate read-only dashboard lists DAOs that opt in |
+| Treasury | P2WSH 3-of-5 sorted multisig; payouts are PSBTs; council signatures are the binding approval |
+| Lightning | Not in v1. Later: payouts to Lightning by swap, then a capped Lightning "Purse" |
+| Roles | Members vote; council members hold treasury keys. Voting and signing rights are separated by keys, not only by policy |
+| Member identity | Nostr key derived from the member's passkey (PRF), never stored; password plus backup file as fallback |
+| Signing (BOSA trial) | One shared SeedSigner plus a spare; each council member has their own verified SD card, a 12-word CompactSeedQR card (21x21) and a steel plate at home. No passphrase in the trial |
+| Addresses | Shown as SeedSigner shows them: first 7 and last 7 characters highlighted, middle in full; compared in full |
+| Proposals | Short binding summary plus optional link with a fingerprint; wallet address in its own validated field; recipient confirms the address |
+| Vote counting | A council member signs the final tally at close; the tally is anchored with OpenTimestamps |
+| Onboarding | Sponsor plus council verification, in person or by video call (two council members for remote); consent to public record and age 18+ |
+| Leaving and key loss | Members leave without a vote; lost keys are replaced after re-verification and 3 council endorsements |
+| Recovery | Recovery sheet with the descriptor is essential: 3 seeds alone cannot recover a multisig |
+| Repo | `btc-dao` under the Bitcoin-DAO organisation; BOSA DAO is the first instance. Licence added last |
+
+## Open questions
+
+- [ ] Who are the five BOSA DAO council members, and who are the founding members?
+- [ ] Is a quorum of one third right for a small founding group?
+- [ ] Should member votes on payouts be public by name, or tallies only?
+- [ ] Where is the DAO relay hosted, and by whom?
+- [ ] Which free static host, and which domain?
+- [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
+- [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2
+- [ ] Is passkey PRF supported on the phones BOSA members use?
+- [ ] Which provisional Nostr kind numbers to claim?
+- [ ] Legal check (Italy, UK): confirm keyless coordination software is not custody
+- [ ] Founding charter text, and the "first wallet in 5 minutes" guide

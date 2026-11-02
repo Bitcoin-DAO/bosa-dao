@@ -1,0 +1,416 @@
+# BOSA DAO — Bitcoin DAO Specification v0.1
+
+Nov 2, 2026 · @Carl
+
+## Purpose and principles
+
+This software gives one community a SputnikDAO-style experience on Bitcoin alone: members propose and vote, a council of keyholders approves payouts, and anyone can audit the treasury. It is built for one DAO and copied (forked) by each new DAO, never run as a shared platform.
+
+Design principles:
+
+- **Bitcoin only.** The treasury is an on-chain multisig. No tokens, no other chain, no bridge.
+- **One DAO per codebase.** Each DAO owns its repo, hosting, relays and keys. Nobody sits in the middle.
+- **Keyless software.** The website and any server never hold a key that can move funds. Partial signatures alone cannot spend.
+- **Approval is execution.** A payout is a PSBT; council signatures are the binding vote. The transaction becomes valid at the threshold, never before.
+- **Separate identity from money.** Keys for logging in and voting are never the keys that sign for the treasury.
+- **Standards over invention.** PSBT (BIP-174/370), standard wallet descriptors, Nostr events. Sparrow or any standard wallet can always recover the funds without this software.
+- **No tech skills to take part.** Members never see the words PSBT, xpub or descriptor.
+- **Public by default.** Members, rules, proposals, votes, balance and payouts are visible to anyone.
+- **Static and forkable.** Static files plus one config file. The fork-readiness checklist defines when the code counts as released.
+
+## BOSA DAO: the reference instance
+
+BOSA DAO is the first deployment and the proof of concept: a 3-of-5 council governing a treasury for a local bitcoin community in Bosa, Sardinia. The code is released only once BOSA DAO runs on mainnet and the fork kit has been proven on a second group.
+
+| Setting | BOSA DAO value | Configurable in a fork |
+| --- | --- | --- |
+| Purpose | Fund a local bitcoin community | Yes |
+| Council | 5 keyholders | Yes |
+| Signing threshold | 3 of 5 | Yes |
+| Treasury type | P2WSH sorted multisig | Fixed in v1 |
+| Signing devices | One shared SeedSigner plus a spare; each member has their own SD card and SeedQR card | Yes |
+| Voting | One member, one vote | Fixed in v1 |
+| Payout cadence | Monthly payout round | Yes |
+| Network | Signet for the pilot, then mainnet | Yes |
+| Interface languages | Italian and English | Yes |
+
+Why 3-of-5: the treasury survives two lost or unavailable keys, and no two people can move funds alone. The five keyholders should not share a household or employer.
+
+## Roles
+
+Four roles; one person can hold several. Only the council holds treasury keys.
+
+| Role | Who | Can do | Needs |
+| --- | --- | --- | --- |
+| Observer | Anyone | See members, rules, proposals, votes, balance, payouts | A browser |
+| Member | Admitted by member vote and council endorsement | Propose, vote, comment | Passkey sign-in (identity key created in the browser) |
+| Council member | One of the 5 treasury keyholders, also a member | Endorse roster and rule changes, prepare and sign payout rounds | Own SeedSigner SD card, SeedQR card, steel seed plate at home, recovery sheet |
+| Maintainer | Whoever keeps the DAO's fork up to date | Merge upstream releases, edit the config by approved proposal | Repo access; no treasury key |
+
+### Council member duties
+
+1. **Joining (once):** attend the key ceremony, create a seed from dice, stamp it on steel, make a SeedQR card, export the public key (xpub) by QR, load the finished wallet descriptor onto the device, keep the recovery sheet.
+2. **Each round:** read the passed proposals, check every output on the device screen, sign or decline with a reason.
+3. **On change:** report a lost or exposed seed at once; leaving the council triggers a migration to a new multisig.
+
+Rules: never type a seed into a phone or computer, never photograph it, never sign what the device screen does not confirm, never share a seed with another member, never store SeedQR cards together or with the shared device.
+
+## Architecture
+
+The DAO is a static website, one config file, Nostr relays and a public chain API; there is no backend server and nothing to take down except files anyone can re-host.
+
+*Diagram: architecture, no backend, keys only on signing devices (see the spec doc; to be added as an image in `design/`).*
+
+The browser does all coordination: it rebuilds state from events, tallies votes, builds payout PSBTs and broadcasts once 3 signatures arrive. Only the SeedSigners can sign for the treasury, and they never touch the network.
+
+## Identity and keys
+
+Each person has an identity key for signing in and voting, and each council member also has a separate treasury key on a hardware device. Losing or leaking one never exposes the other.
+
+| Key | Holder | Used for | Lives in | If lost |
+| --- | --- | --- | --- | --- |
+| Identity key (Nostr) | Every member | Sign-in, proposals, votes, endorsements | Derived from the member's passkey each time; never stored | A synced passkey restores it on any device; otherwise key replacement after in-person re-verification |
+| Treasury key | Each council member | Signing payout rounds and migrations | SeedQR card carried to signing; steel plate kept at home; loaded into the shared SeedSigner only while signing | Threshold still met; council migrates to a new multisig |
+
+Sign-in for members:
+
+1. A member opens the DAO site and taps **Join** or **Sign in**.
+2. The phone creates a passkey (fingerprint or face), and the identity key is derived from it using the passkey PRF extension, never stored. The same passkey always gives the same key, so any device where the member's passkey syncs restores their identity automatically. Where the phone cannot do this, a password plus an encrypted backup file is the fallback, and only then must the member keep something safe.
+3. Members who already use Nostr can sign in with their existing key through a browser extension instead.
+
+A member's identity key never controls money, so a phished member can cast false votes but cannot move funds: the council still has to sign.
+
+## Member onboarding
+
+A new member joins in about two minutes at a meetup and writes nothing down; three people take part, and each step leaves a signed record.
+
+| Step | Candidate | Sponsor (a member) | Council member present |
+| --- | --- | --- | --- |
+| 1. Start | Opens the site, taps Become a member, picks a pseudonym | — | — |
+| 2. Key | Creates a passkey; identity key derived from it | — | — |
+| 3. Code | Shows a QR code and a short code | Scans it with Propose this member; both read the short code aloud | Scans the same code |
+| 4. Verify | — | — | Signs a `dao.verify` event: verified in person, date |
+| 5. Consent | Ticks the charter, privacy notice and age 18+ separately; sends | — | — |
+| 6. Proposal | — | Publishes the pre-filled add-member proposal, linked to the verify event | — |
+| 7. Admission | Waits; can browse but not vote | — | After the vote passes, 3 council members endorse the new roster |
+
+### Rules for onboarding
+
+- **Nothing to write down** when the passkey route works. The password route is the only case where a member keeps a password and backup file, and the screen says so plainly.
+- **Privacy consent is its own tick box:** the pseudonym and every vote are public and permanent. Real names are never required.
+- **Age:** members must be 18 or over, confirmed by tick box and stated in the charter.
+- **While waiting:** the done screen says voting opens after the 7-day vote and 3 council confirmations; the member sees their admission status at each sign-in.
+- **Second device:** signing in on another device with the same synced passkey restores the identity; no transfer step.
+- **Receiving payouts:** joining needs no wallet. After joining, the member is offered a short guide to set up a bitcoin wallet, needed only to receive payouts.
+- **Key replacement:** a member who loses their passkey and has no backup is re-verified in person; the council member signs a `dao.rekey` event linking old and new keys, endorsed by 3 council members. No member vote is needed. Votes cast with the old key before the replacement stay valid; anything signed with the old key after it is ignored.
+- **Leaving:** a member can leave at any time from their profile by signing a `dao.leave` event; the next roster version drops them without a vote. Their votes on still-open proposals are withdrawn; closed votes and their pseudonym stay in the public record. Their open proposals stay in voting, and payouts already approved to them stay valid. A council member cannot leave this way: a council-change proposal comes first.
+
+New event types for onboarding: `dao.verify` (council member, verification of a candidate key, marked in person or remote), `dao.rekey` (council member, old and new identity key; valid with 3 council endorsements), `dao.leave` (member, own exit).
+
+### Remote members
+
+DAOs built on btc-dao are expected to be both local and spread across countries, so every in-person step has a video-call equivalent. Remote verification is slightly weaker on one point, one person joining once, so it is marked and can be limited by each DAO's rules.
+
+| What in-person proves | Over video | Strength |
+| --- | --- | --- |
+| The key belongs to this person | Candidate sends their code by message or link; on the call they hold up their phone and read the short code aloud. The short code is derived from the key, so a swapped key shows a different code | Same |
+| A real person, joining once | A face on camera, vouched for by a sponsor who knows them | Weaker |
+| Someone vouches for them | Sponsor named on the record, as in person | Same |
+
+Rules for remote verification:
+
+- **Two council members on the call**, each signing a `dao.verify` event marked remote. In person, one is enough.
+- **The sponsor must know the candidate personally**, not only online.
+- **Remote members are marked** "verified remotely" on the members page. A later in-person verification removes the mark.
+- **Calls are never recorded.** The signed verify events are the record.
+- **Optional limits, set per DAO in the rules:** whether remote-only members may join the council, and a maximum share of remote-only members. BOSA DAO default: no limits, remote members may not join the council during the trial.
+
+Remote working for the council:
+
+- **Own signing devices.** A shared SeedSigner only works when the council meets in one place. Any council member not local signs with their own device; a spread-out DAO gives every council member their own.
+- **Remote key ceremony.** Each council member creates their seed alone with their own device and dice, then shows their public key fingerprint on a call so the others record it on the recovery sheet.
+- **Remote key replacement** follows remote verification: two council members on the call, then the usual 3 endorsements.
+
+## Treasury
+
+The treasury is a standard 3-of-5 P2WSH sorted multisig, chosen over Taproot because SeedSigner and most hardware signers handle it today and every standard wallet can recover it.
+
+- **Derivation:** each council key exported at the BIP-48 multisig path `m/48'/0'/0'/2'` (testnet/signet: `m/48'/1'/0'/2'`).
+- **Descriptor:** `wsh(sortedmulti(3, [fp1/48'/0'/0'/2']xpub1/<0;1>/*, … five keys …))` with its checksum. Receive addresses use branch 0, change uses branch 1.
+- **Watch-only:** the website holds the descriptor only. It derives addresses, shows balance and history, and builds PSBTs, but cannot sign.
+- **Device check:** each SeedSigner has the descriptor loaded by QR, so it can confirm that change returns to the treasury.
+- **Address reuse:** each donation request shows a fresh receive address; the public page lists all of them.
+
+### Recovery sheet
+
+A one-page printout produced at setup, held by every council member and published in the repo:
+
+- DAO name, network, threshold (3 of 5) and creation date
+- The full descriptor with checksum, as text and QR
+- The five key fingerprints, each labelled with its holder's role
+- Plain steps to restore in Sparrow: import the descriptor, gather any 3 seeds, sign, broadcast
+
+The sheet cannot spend anything on its own. With any 3 seeds it recovers the whole treasury without this software, its relays or its website.
+
+**Seeds alone are not enough.** In a multisig, recovering the funds needs all five public keys as well as 3 seeds, and only the recovery sheet holds all five. Losing every copy of the sheet is as serious as losing 3 seeds. So the sheet is kept in several places: one printed copy per council member, stored away from their seed; a copy in the public btc-dao repository; and a new version issued after every council change. The warning is printed at the top of the sheet itself.
+
+### Signing setup for the trial
+
+BOSA DAO's trial uses one shared SeedSigner, and no single item a council member carries can move funds: each SeedQR card is one full key, and 3 are needed.
+
+| Item | Held by | Contains | Kept |
+| --- | --- | --- | --- |
+| SeedSigner device, plus a spare | The council, shared | No keys or software | Anywhere; it is stateless |
+| SD card | Each member, their own | Official SeedSigner image, verified at the SD card ceremony; no seed | With the member |
+| SeedQR card | Each member | Their seed as a QR code: one full key | Carried to signing, taken home after; never stored with other cards or the device |
+| Steel plate | Each member | Their seed words: the backup | At home, never carried |
+| Recovery sheet | Every member, public in repo | Descriptor and fingerprints; no keys | Anywhere |
+
+Signing: insert your own SD card, boot, scan your SeedQR card, check the fingerprint shown matches your line on the recovery sheet, scan the payout QR, check outputs on screen, show the signed QR.
+
+No passphrase in the trial. Adding one later changes each public key, so it is done as a council-change migration to a new multisig. Members may also use their own SeedSigner, which forks spread over distance will need.
+
+## Governance rules
+
+Members decide by vote; the council makes money decisions binding by signing and makes membership and rule changes binding by endorsing. Every rule below is a value in the config file; the BOSA DAO defaults are shown.
+
+### Proposal types
+
+| Type | What it does | Pass rule (BOSA default) | Made binding by |
+| --- | --- | --- | --- |
+| Payout | Pays one or more recipients from the treasury | Simple majority, quorum met | 3 council signatures in a payout round |
+| Statement | Adopts a text: a decision, manifesto or policy | Simple majority, quorum met | The passed vote itself |
+| Add member | Admits a person by their identity key | Simple majority, quorum met | 3 council endorsements of the new roster |
+| Remove member | Removes a person from the roster | Two-thirds majority, quorum met | 3 council endorsements of the new roster |
+| Change rules | Edits governance values (periods, quorum, cadence) | Two-thirds majority, quorum met | 3 council endorsements of the new rules |
+| Change council | Replaces a keyholder or the threshold | Two-thirds majority, quorum met | 3 council signatures on the migration transaction |
+
+### Voting
+
+- **Who votes:** every member on the current roster, one vote each: yes, no or abstain.
+- **Voting period:** 7 days from publication.
+- **Quorum:** at least one third of members cast a vote. Abstain counts toward quorum.
+- **Early end:** a proposal closes as soon as its result can no longer change.
+- **Votes are public** and signed; a member may change their vote until the period ends.
+
+### Lifecycle
+
+1. **Draft:** any member writes a proposal; payouts carry amount, recipient address and purpose.
+2. **Voting:** open for the voting period.
+3. **Passed** or **Rejected:** fixed once the period ends or the result is certain.
+4. **Binding step:** passed payouts join the next payout round; roster and rule changes await council endorsement.
+5. **Done** with a receipt, **Declined** by the council with a public reason, or **Lapsed** if not made binding within 2 payout rounds.
+
+Past proposals of every status stay visible forever. The council may decline a passed payout, but must publish why; that refusal is itself part of the public record.
+
+## Proposal fields
+
+Every proposal has a short binding summary plus an optional link to the full text; discussion happens outside the app, as in Sputnik DAO. Wallet details always go in their own validated field, never in free text.
+
+### Fields on every proposal
+
+| Field | Filled by | Notes |
+| --- | --- | --- |
+| Proposal ID | Automatic | e.g. BOSA-0007 |
+| Type | Proposer | Payout, Statement, Add member, Remove member, Change rules, Change council |
+| Title | Proposer | Up to 80 characters |
+| Summary | Proposer | Up to 500 characters; the binding text members vote on |
+| Full proposal link | Proposer | Optional URL for detail, budgets, images |
+| Link fingerprint | Automatic | Hash of the linked page at submission, so later edits are detectable |
+| Language | Proposer | Italian or English |
+| Proposer | Automatic | Display name, from the signed identity key |
+| Created, voting closes | Automatic | Close date from the rules |
+| Status | Automatic | Voting, Passed, Rejected, In round, Done, Declined, Lapsed |
+
+### Extra fields by type
+
+| Type | Field | Notes |
+| --- | --- | --- |
+| Payout | Recipient name | Display name; may be a non-member |
+| Payout | Recipient bitcoin address | Own box; paste or scan QR; checked for format and network; treasury's own addresses rejected |
+| Payout | Amount (sats) | Fixed in sats; euro estimate shown |
+| Payout | Recipient is a member | Automatic; if yes, the recipient cannot vote on it and it is flagged |
+| Payout | Recipient confirmation | Recipient confirms the address; required when proposer and recipient differ |
+| Add member | Candidate display name | Pseudonym allowed |
+| Add member | Candidate identity key | Created at in-person sign-up |
+| Add member | Sponsor | Automatic: the proposer |
+| Add member | Verified in person by | Council member present at sign-up |
+| Remove member | Member, reason | — |
+| Change rules | Setting, current value, proposed value | Current value filled automatically |
+| Change council | Outgoing and incoming member | Incoming must already be a member |
+| Change council | Incoming public key and fingerprint | From their key ceremony |
+| Change council | New threshold | 3 unless changed |
+| Change council | New treasury address | Automatic, from the new multisig |
+
+Statements use the common fields only.
+
+### Recipient address flow
+
+1. The recipient shows a fresh receive address from their own wallet as a QR code.
+2. The proposer scans it into the address box, or the recipient enters it if they are a member.
+3. If proposer and recipient differ, the recipient confirms the address on the proposal page before voting closes.
+4. At signing, each council member checks the address on the SeedSigner screen against the proposal page.
+
+Proposals are public forever, so recipients should use an address not reused elsewhere. A Lightning address option follows once payouts by swap arrive.
+
+## Payout rounds and signing
+
+All payouts passed since the last round go out together in one monthly transaction, so the council signs once a month and fees are shared.
+
+*Diagram: monthly payout round, 6 steps and 1 threshold check (see the spec doc; to be added as an image in `design/`).*
+
+- **Prepare:** any council member presses Prepare round. The browser builds one PSBT paying every passed proposal, with change back to the treasury and a fee rate from the chain API, and publishes it as a `dao.round` event.
+- **Verify:** every other browser rebuilds the expected outputs from the passed proposals and refuses to show Sign if they differ by a single sat.
+- **Sign:** members sign in any order, alone or at a meeting in Bosa. Each partial signature is published; on its own it can spend nothing.
+- **Broadcast:** the browser that sees the third valid signature combines them and broadcasts; any other browser can rebroadcast.
+- **Decline:** a council member may refuse with a public reason; a round that never reaches 3 signatures lapses after 2 rounds.
+
+## Event formats
+
+All DAO activity is signed Nostr events, published to the DAO's own relay plus at least two public relays. Every client rebuilds the DAO's state from these events and the chain; nothing is trusted because a server said so.
+
+Every event carries a `dao` tag holding the DAO id (the hash of its genesis config) and a `v` tag with the format version. Kind numbers are provisional and must be checked against the Nostr kind registry before v1.
+
+| Event | Signed by | Content | Valid when |
+| --- | --- | --- | --- |
+| `dao.genesis` | Founding council member | Initial config: name, rules, council identity keys, xpubs, descriptor, relays | Endorsed by 3 council identity keys |
+| `dao.endorse` | Council member (identity key) | Hash of a roster, rules or config version | Signer is on the current council |
+| `dao.roster` | Any council member | Full member list with version number and previous-version hash | 3 endorsements of its hash |
+| `dao.proposal` | Member | Type, title, body, and for payouts: outputs (address, amount in sats) and purpose | Signer is on the roster at publication |
+| `dao.vote` | Member | Proposal id, yes / no / abstain | Signer on the roster; latest vote per member counts |
+| `dao.round` | Council member | Payout round: proposal ids, unsigned PSBT, fee rate | PSBT outputs match exactly the passed proposals listed |
+| `dao.sign` | Council member (identity key) | Round id, partially signed PSBT or a decline with reason | Signature verifies against that member's treasury key |
+| `dao.receipt` | Any council member | Round id, txid, block height | Transaction confirmed on chain |
+| `dao.anchor` | Any member | Digest of a closed decision, OpenTimestamps proof | Proof verifies against Bitcoin |
+| `dao.listing` | Council member | Name, relays, descriptor, site link, software version | Endorsed by 3 council identity keys |
+
+The repo publishes these formats as a short protocol document, so another team can write a compatible client.
+
+## Public record and anchoring
+
+Anyone can open the DAO site without signing in and check every figure against the chain and the signed events.
+
+The public pages:
+
+- **Treasury:** balance in sats (euro estimate beside it), the receive address with QR, every incoming and outgoing transaction, each payout linked to its proposal and round.
+- **Proposals:** open, passed, rejected, declined and lapsed, with vote tallies and each member's vote.
+- **Members:** the current roster, its version history, and the council with each member's key fingerprint.
+- **Rules:** the governance values in force and when each last changed.
+- **Recovery:** the recovery sheet, downloadable as PDF.
+
+### Anchoring
+
+When a proposal closes, any member's browser computes a digest of the proposal and all its votes and timestamps it with OpenTimestamps, which batches many hashes into one Bitcoin transaction at no cost to the DAO. The proof is published as a `dao.anchor` event. Anchoring proves the record existed unchanged at that block; it does not keep the record available, so each council member keeps a full export of the DAO's events (one button on the site).
+
+## Fork kit, config and dashboard
+
+A new DAO is a fork of the repo plus its own `dao.config.json`; everything that makes a DAO itself lives in that one file, and it holds no secrets. Keeping code and config apart lets forks merge upstream security fixes cleanly.
+
+### Config file
+
+| Field | Holds | Example (BOSA DAO) |
+| --- | --- | --- |
+| `name`, `description`, `languages` | Identity and interface languages | BOSA DAO; it, en |
+| `network` | signet or mainnet | signet, then mainnet |
+| `council` | 5 entries: role label, identity key, key fingerprint, xpub | — |
+| `threshold` | Signatures needed | 3 |
+| `descriptor` | Treasury descriptor with checksum | `wsh(sortedmulti(3, …))#…` |
+| `relays` | DAO relay first, then public relays | 3 relays |
+| `chainApi` | Esplora-compatible endpoints, in order of preference | public explorer, own node later |
+| `rules` | Voting period, quorum, majorities, payout cadence, lapse limit | 7 days; 1/3; simple and 2/3; monthly; 2 rounds |
+| `branding` | Logo, colours | — |
+
+The config is the genesis state only. Later roster and rule changes live in endorsed events; the maintainer folds them back into the config at each release.
+
+### Fork kit
+
+For a group without a developer:
+
+1. A setup wizard on the site asks plain questions (name, languages, council size, threshold, rules) and collects each council member's xpub by QR at the key ceremony.
+2. It produces the config file and the recovery sheet.
+3. One-click deploy to free static hosting from a template repo.
+4. A checklist walks the group through signet testing before mainnet.
+
+### Read-only dashboard
+
+A separate static site lists every DAO that publishes a `dao.listing` event: name, balance, open proposals, payout history and software version, with outdated versions flagged. It holds no keys and changes nothing; anyone can run their own copy, and DAOs work normally if it goes down.
+
+## Threat model
+
+The signing device's screen is the final authority: no attack on the website, relays or member accounts can move funds without 3 council members approving outputs on their own devices.
+
+| Threat | Effect | Safeguard |
+| --- | --- | --- |
+| Website code tampered with | Shows false proposals or builds a PSBT paying an attacker | Device screen check; descriptor on device verifies change; pinned, bundled dependencies; signed releases; reproducible build |
+| Relay censors or drops events | Proposals or votes missing | Events on 3+ relays; council keeps event exports; anchors prove what existed |
+| Member identity key phished | False votes or proposals in that member's name | Council review before signing; remove-member vote; votes visible to all |
+| Council member's seed lost | One key gone | Threshold still met; council-change migration |
+| Council member's SeedQR card or seed lost or exposed | Attacker holds 1 of 3 needed keys | Report at once; migrate before any further loss; cards never stored together |
+| Three council members collude | Funds moved against the member vote | Public record of every payout and vote; members choose keyholders; council-change by members' 2/3 vote |
+| Software or site disappears | No interface | Recovery sheet plus 3 seeds restore in Sparrow |
+| Device vendor bug | Faulty signing on one brand | Mixed devices: no single brand holds 3 keys |
+
+The software never holds a key that can move funds, so it is coordination software, not a custodian. That position should be confirmed with an adviser in Italy and the UK before mainnet, given MiCA.
+
+## Security requirements
+
+The design review found the treasury safe for a capped trial, provided the requirements below are met; each is tied to the phase gate it must pass.
+
+| ID | Requirement | Why | Gate |
+| --- | --- | --- | --- |
+| S1 | Show every address in full, laid out as SeedSigner shows it: first 7 and last 7 characters highlighted, the middle in full between them. Council members compare the whole address on the device, middle included, never just the highlighted ends | Look-alike addresses matching the ends are cheap to generate | Phase 1 |
+| S2 | Strict content security policy, no third-party scripts, pinned and bundled libraries, signed releases with a published hash, and a mirror of the site on a second host | A tampered website could show correct payouts while building different ones | Phase 1 |
+| S3 | At voting close, a council member publishes a signed final tally listing exactly which votes counted; the tally is what gets anchored, and late events are ignored | Nostr timestamps are set by the signer, so votes can be backdated | Phase 1 |
+| S4 | Written state rules plus test cases for edge cases: duplicate votes, a member removed mid-vote, out-of-order events, events from other DAOs | Bugs in rebuilding state from events could allow forged roster or rule changes | Phase 1 |
+| S5 | A fee ceiling in the rules; the app refuses to show Sign above it | A malicious or mistaken round could burn funds in fees | Phase 1 |
+| S6 | Identity keys encrypted in the browser; S2 measures protect them | Stolen identity keys allow false votes, never fund movement | Phase 1 |
+| S7 | The wallet descriptor is loaded on the SeedSigner at every signing and change shows as verified; skipping verification is not allowed. SeedSigner shows change addresses on one line only, so this check is what protects the change | Otherwise a round could quietly redirect the change | Phase 2 (hard gate) |
+| S8 | Main and spare SeedSigner bought from different sources, sealed between rounds; signing times not announced | Hardware tampering, and three SeedQR cards in one room | Phase 3 |
+| S9 | Treasury capped during the trial at an amount the community can afford to lose; the cap is a rule changed only by a two-thirds vote | Limits the cost of any flaw not yet found | Phase 3 |
+
+Audit timing: this design review now; an independent code review by a bitcoin-experienced developer at the end of phase 2, before mainnet funds; a sats bug bounty once the fork kit is public.
+
+## Out of scope for v1
+
+Version 1 is an on-chain treasury with member governance; everything below is deliberately left out.
+
+Not planned:
+
+- Governance tokens or voting weighted by holdings
+- Arbitrary actions (Sputnik-style function calls)
+- A shared multi-DAO platform
+
+Later additions, in likely order:
+
+1. **Lightning payouts by swap:** council signs an on-chain PSBT to a non-custodial swap service that pays the recipient's Lightning invoice. No Lightning funds held.
+2. **The Purse:** a small Lightning balance for instant payouts and incoming tips, with a spending cap, topped up from the treasury by payout round.
+3. **Proposal deposit:** a small refundable payment to curb spam, if membership alone proves insufficient.
+4. **Veto window:** payouts held in a timelocked output for about a day, during which a recovery path can return funds. Needs pre-signed transactions; revisit if covenant upgrades activate on Bitcoin.
+
+## Build plan and fork-readiness
+
+Four phases, each closed by a gate; the repo counts as released only after phase 4, with the licence added last.
+
+1. **Signet prototype.** Passkey sign-in, roster, proposals and votes as events, a 3-of-5 treasury on signet with browser test keys, payout round flow end to end.
+   - Gate: a signet payout round passes from proposal to confirmed receipt, run by five testers.
+2. **Hardware signing on signet.** SeedSigner QR signing, descriptor loaded on devices, recovery sheet, restore tested in Sparrow.
+   - Gate: the treasury is restored and spent in Sparrow without the website.
+3. **BOSA DAO on mainnet.** Key ceremony for the five council members, small treasury, first real monthly rounds, anchoring, public pages.
+   - Gate: three monthly rounds completed without developer help.
+4. **Fork kit.** Setup wizard, template repo, one-click deploy, dashboard listing, FORK-TASKS.md complete.
+   - Gate: a second group deploys its own DAO from the kit and runs one round on signet.
+
+Repo: btc-dao. Stack: static site, bundled and pinned libraries (`@scure/btc-signer` or BDK for transactions, `nostr-tools` for events, WebAuthn for passkeys), an Esplora-compatible API for chain data, and the DAO's own relay.
+
+## Open questions
+
+- [ ] Who are the five BOSA DAO council members, and who are the founding members?
+- [ ] Is a quorum of one third right for a small founding group, or should it start higher?
+- [ ] Should member votes on payouts be public by name, or tallies only?
+- [ ] Where is the DAO relay hosted, and by whom?
+- [ ] Which free static host for the site, and under which domain?
+- [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
+- [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2.
+- [ ] Which provisional Nostr kind numbers to claim, and do any collide?
+- [ ] Legal check (Italy, UK): confirm keyless coordination software is not custody.
+- [ ] Decided: the software repo is named btc-dao; BOSA DAO is its first instance.
