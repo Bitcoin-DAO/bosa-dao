@@ -22,6 +22,8 @@
 | DAO id | SHA-256 of the canonical (RFC 8785) genesis config; never changes |
 | Identity per DAO | The passkey-derived key is salted with the DAO id, so one passkey gives unlinkable identities in different DAOs |
 | Domain | Chosen once and kept: passkeys are bound to the domain, so a move means every member replaces their key |
+| Domains | `btcdao.tech` for the project (about, guides, fork kit, read-only dashboard); `bosadao.it` for BOSA DAO, with the trial at `signet.bosadao.it` and the relay at `relay.bosadao.it`. Passkeys are tied to `bosadao.it` so all its subdomains share them |
+| Domain care | Several years paid with auto-renew; two council members can reach the registrar account. A lapsed domain locks members out of signing in |
 | Proposal numbers | Not stored in events; every client derives them by sorting proposals by time, then id |
 
 ## Open questions
@@ -30,7 +32,8 @@
 - [ ] Is a quorum of one third right for a small founding group?
 - [ ] Should member votes on payouts be public by name, or tallies only?
 - [ ] Where is the DAO relay hosted, and by whom?
-- [ ] Which free static host, and which domain?
+- [ ] Which free static host?
+- [ ] Who registers bosadao.it? The DAO has no legal entity, so a .it registrant must be a person or organisation that qualifies; record who, and plan how it passes on
 - [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
 - [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2
 - [ ] Is passkey PRF supported on the phones BOSA members use?

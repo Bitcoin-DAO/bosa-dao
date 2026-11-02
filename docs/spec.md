@@ -324,10 +324,12 @@ A new DAO is a fork of the repo plus its own `dao.config.json`; everything that 
 | --- | --- | --- |
 | `name`, `description`, `languages` | Identity and interface languages | BOSA DAO; it, en |
 | `network` | signet or mainnet | signet, then mainnet |
+| `site` | The DAO's web address | https://signet.bosadao.it, then https://bosadao.it |
+| `passkeyDomain` | The domain passkeys are tied to; never changes | bosadao.it |
 | `council` | 5 entries: role label, identity key, key fingerprint, xpub | — |
 | `threshold` | Signatures needed | 3 |
 | `descriptor` | Treasury descriptor with checksum | `wsh(sortedmulti(3, …))#…` |
-| `relays` | DAO relay first, then public relays | 3 relays |
+| `relays` | DAO relay first, then public relays | wss://relay.bosadao.it plus 2 public relays |
 | `chainApi` | Esplora-compatible endpoints, in order of preference | public explorer, own node later |
 | `rules` | Voting period, quorum, majorities, payout cadence, lapse limit | 7 days; 1/3; simple and 2/3; monthly; 2 rounds |
 | `branding` | Logo, colours | — |
@@ -360,6 +362,7 @@ The signing device's screen is the final authority: no attack on the website, re
 | Council member's SeedQR card or seed lost or exposed | Attacker holds 1 of 3 needed keys | Report at once; migrate before any further loss; cards never stored together |
 | Three council members collude | Funds moved against the member vote | Public record of every payout and vote; members choose keyholders; council-change by members' 2/3 vote |
 | Software or site disappears | No interface | Recovery sheet plus 3 seeds restore in Sparrow |
+| Domain lost or not renewed | Members' passkeys stop working; the site has to move | Several years paid with auto-renew; two council members can reach the registrar account; the recovery sheet still recovers funds |
 | Device vendor bug | Faulty signing on one brand | Mixed devices: no single brand holds 3 keys |
 
 The software never holds a key that can move funds, so it is coordination software, not a custodian. That position should be confirmed with an adviser in Italy and the UK before mainnet, given MiCA.
@@ -420,7 +423,7 @@ Repo: btc-dao. Stack: static site, bundled and pinned libraries (`@scure/btc-sig
 - [ ] Is a quorum of one third right for a small founding group, or should it start higher?
 - [ ] Should member votes on payouts be public by name, or tallies only?
 - [ ] Where is the DAO relay hosted, and by whom?
-- [ ] Which free static host for the site, and under which domain? The domain cannot change later without every member replacing their key.
+- [ ] Which free static host for the site? Domains decided: btcdao.tech for the project, bosadao.it for BOSA DAO.
 - [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
 - [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2.
 - [ ] Are kinds 3570–3585 and the D tag free in the Nostr kind registry?

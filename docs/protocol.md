@@ -47,6 +47,8 @@ Members do not store their identity key; it is derived each time from their pass
 
 A passkey is bound to the website's domain. **Changing the DAO's domain makes every member's passkey unusable for it**, so the domain must be chosen once and kept; a move needs every member to go through key replacement.
 
+The WebAuthn relying-party id is the config's `passkeyDomain`, set to the DAO's registrable domain (for BOSA DAO, `bosadao.it`), not to the full host. Pages on any subdomain, such as `signet.bosadao.it` for the trial, then use the same passkeys. Because the derivation salt includes the DAO id, the signet and mainnet DAOs still give each member two different identities.
+
 The password route stores the same kind of key encrypted with a password-derived key (scrypt, then XChaCha20-Poly1305) in a file the member keeps. Nostr users may instead sign with their existing key through a NIP-07 browser extension.
 
 ### 1.6 Short code
