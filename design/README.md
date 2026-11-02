@@ -1,23 +1,49 @@
 # Design
 
-`mockups/` holds the clickable mock-up of BOSA DAO, in Italian, one file per screen. All names, amounts, dates and addresses are sample data; addresses are placeholder signet-format strings.
+The clickable mock-up of BOSA DAO, in Italian. All names, amounts, dates and addresses are sample data; addresses are placeholder signet-format strings.
 
-The files are Design Component pages (`.dc.html`) made on a design canvas; they need that canvas's runtime to render, so they are kept here as source. `canvas.json` gives each screen's position and size. PNG exports of each screen are still to be added.
+- `mockups/`: source files, one Design Component page (`.dc.html`) per screen, plus `canvas.json` with each screen's size.
+- `screens/`: a PNG of each screen in its default state, rendered from the source.
+- `diagrams/`: the two diagrams from the spec.
 
-| File | Screen |
+To regenerate the PNGs after changing a screen, see `tools/render-mockups/`.
+
+## Member journey
+
+| Join or sign in | Home and treasury | Proposals |
+| --- | --- | --- |
+| ![Join](screens/Join.png) | ![Home](screens/Main.png) | ![Proposals](screens/Proposals.png) |
+
+| Proposal and archive | New proposal | Recipient confirmation |
+| --- | --- | --- |
+| ![Proposal detail](screens/ProposalDetail.png) | ![New proposal](screens/NewProposal.png) | ![Confirm](screens/Confirm.png) |
+
+| Propose a new member | Profile and leaving |
 | --- | --- |
-| `Join.dc.html` | Join or sign in (passkey, code, consents) |
-| `Main.dc.html` | Home and public treasury |
-| `Proposals.dc.html` | Proposals list |
-| `ProposalDetail.dc.html` | One proposal with history, plus the archive |
-| `NewProposal.dc.html` | New proposal form, all six types |
-| `Confirm.dc.html` | Recipient confirms their address |
-| `Signing.dc.html` | Council signs a payout round with SeedSigner |
-| `CouncilInbox.dc.html` | Council to-do list |
-| `PrepareRound.dc.html` | Council prepares a payout round |
-| `Members.dc.html` | Members, council fingerprints, roster history |
-| `Rules.dc.html` | Rules in force |
-| `RecoverySheet.dc.html` | Printable A4 recovery sheet |
-| `SponsorMember.dc.html` | Sponsor proposes a new member, in person or remote |
-| `Profile.dc.html` | Member profile and leaving the DAO |
-| `ReplaceKey.dc.html` | Council replaces a member's lost key |
+| ![Sponsor a member](screens/SponsorMember.png) | ![Profile](screens/Profile.png) |
+
+## Council
+
+| Council inbox | Prepare a round | Sign a round |
+| --- | --- | --- |
+| ![Council inbox](screens/CouncilInbox.png) | ![Prepare round](screens/PrepareRound.png) | ![Signing](screens/Signing.png) |
+
+| Replace a member's key |
+| --- |
+| ![Replace key](screens/ReplaceKey.png) |
+
+## Public reference
+
+| Members | Rules |
+| --- | --- |
+| ![Members](screens/Members.png) | ![Rules](screens/Rules.png) |
+
+**Recovery sheet** (printable A4)
+
+![Recovery sheet](screens/RecoverySheet.png)
+
+## Diagrams
+
+![Architecture](diagrams/architecture.png)
+
+![Payout round](diagrams/payout-round.png)

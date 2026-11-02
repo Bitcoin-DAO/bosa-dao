@@ -59,7 +59,7 @@ Rules: never type a seed into a phone or computer, never photograph it, never si
 
 The DAO is a static website, one config file, Nostr relays and a public chain API; there is no backend server and nothing to take down except files anyone can re-host.
 
-*Diagram: architecture, no backend, keys only on signing devices (see the spec doc; to be added as an image in `design/`).*
+![Architecture: no server holds a key; the browser coordinates, the council signs](../design/diagrams/architecture.png)
 
 The browser does all coordination: it rebuilds state from events, tallies votes, builds payout PSBTs and broadcasts once 3 signatures arrive. Only the SeedSigners can sign for the treasury, and they never touch the network.
 
@@ -257,7 +257,7 @@ Proposals are public forever, so recipients should use an address not reused els
 
 All payouts passed since the last round go out together in one monthly transaction, so the council signs once a month and fees are shared.
 
-*Diagram: monthly payout round, 6 steps and 1 threshold check (see the spec doc; to be added as an image in `design/`).*
+![Payout round: a payout moves only when the third council device signs](../design/diagrams/payout-round.png)
 
 - **Prepare:** any council member presses Prepare round. The browser builds one PSBT paying every passed proposal, with change back to the treasury and a fee rate from the chain API, and publishes it as a `dao.round` event.
 - **Verify:** every other browser rebuilds the expected outputs from the passed proposals and refuses to show Sign if they differ by a single sat.

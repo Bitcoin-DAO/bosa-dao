@@ -15,13 +15,20 @@ A SputnikDAO-style DAO on Bitcoin alone: members propose and vote, a council of 
 
 Nothing here is ready for real funds.
 
+| Home and treasury | Proposals | Council signing |
+| --- | --- | --- |
+| ![Home](design/screens/Main.png) | ![Proposals](design/screens/Proposals.png) | ![Signing](design/screens/Signing.png) |
+
+All 15 screens are in [`design/`](design/README.md).
+
 ## Contents
 
 | Path | What it holds |
 | --- | --- |
 | `docs/spec.md` | The full specification v0.1: roles, keys, onboarding (in person and remote), treasury, governance, proposal fields, payout rounds, event formats, threat model, security requirements, build plan |
 | `docs/decisions.md` | Decisions taken so far and open questions |
-| `design/mockups/` | The mock-up screens (Italian), one file per screen |
+| `design/` | The mock-up screens (Italian) as source and PNG, plus the spec's diagrams |
+| `tools/render-mockups/` | Regenerates the screen PNGs from the source files |
 | `config/bosa-dao.signet.example.json` | Example config for the reference instance, with placeholders |
 | `FORK-TASKS.md` | What must be true before this repo counts as released |
 
