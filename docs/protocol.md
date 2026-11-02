@@ -45,7 +45,7 @@ The identity key is a random secp256k1 secret generated in the browser when the 
 3. `wrap_key = HKDF-SHA256(ikm = prf, salt = "", info = "btc-dao identity wrap v1", length = 32)`.
 4. `ciphertext = XChaCha20-Poly1305(wrap_key, nonce, secret)`, with a random 24-byte nonce.
 
-The ciphertext is kept in the browser and published as a `dao.keywrap` event (section 5.4), so a synced passkey on another device can fetch and open it. A member may register several passkeys, for example a phone and a YubiKey; each has its own `dao.keywrap`.
+The ciphertext is kept in the browser and published as a `dao.keywrap` event (section 5.4), so a synced passkey on another device can fetch and open it. A member may register several passkeys; each has its own `dao.keywrap`.
 
 Where the phone has no PRF support, the secret stays in that browser's storage and the member uses their identity card (section 1.7) on other devices. Nostr users may instead sign with their existing key through a NIP-07 browser extension and back it up their own way.
 
@@ -320,7 +320,7 @@ Events that fail validation are kept and shown in a "rejected" view with the rea
 
 - Confirm the kind numbers and the `D` tag do not collide with existing NIPs.
 - Test cases for every validity rule above (S4), including duplicate and out-of-order events and events from other DAOs.
-- Confirm passkey PRF support on members' phones, including with a YubiKey over USB and NFC (section 1.5).
+- Confirm passkey PRF support on members' phones (section 1.5).
 - Confirm phones can print an identity card straight from the browser without leaving a saved PDF (section 1.7).
 - Confirm SeedSigner accepts the PSBT layout in section 6.1 and verifies change against the loaded descriptor (S7).
 - Decide whether the OpenTimestamps step runs in the browser or needs a small helper.
