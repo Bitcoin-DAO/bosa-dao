@@ -1,4 +1,4 @@
-# BOSA DAO — Bitcoin DAO Specification v0.1
+# BOSA DAO — Bitcoin DAO Specification v0.2
 
 Nov 2, 2026 · @Carl
 
@@ -77,6 +77,8 @@ Sign-in for members:
 1. A member opens the DAO site and taps **Join** or **Sign in**.
 2. The phone creates a passkey (fingerprint or face), and the identity key is derived from it using the passkey PRF extension, never stored. The same passkey always gives the same key, so any device where the member's passkey syncs restores their identity automatically. Where the phone cannot do this, a password plus an encrypted backup file is the fallback, and only then must the member keep something safe.
 3. Members who already use Nostr can sign in with their existing key through a browser extension instead.
+
+The derivation is salted with the DAO id, so one passkey gives a different, unlinkable identity in each DAO. Passkeys are tied to the site's domain, so a DAO chooses its domain once and keeps it: moving it means every member goes through key replacement.
 
 A member's identity key never controls money, so a phished member can cast false votes but cannot move funds: the council still has to sign.
 
@@ -187,21 +189,25 @@ Members decide by vote; the council makes money decisions binding by signing and
 
 ### Voting
 
-- **Who votes:** every member on the current roster, one vote each: yes, no or abstain.
+- **Who votes:** every member on the roster when the proposal was published, one vote each: yes, no or abstain. A member who leaves or is removed before the close loses their vote.
+- **Recipients:** a member who would receive a payout cannot vote on it; their vote is not counted.
 - **Voting period:** 7 days from publication.
 - **Quorum:** at least one third of members cast a vote. Abstain counts toward quorum.
 - **Early end:** a proposal closes as soon as its result can no longer change.
 - **Votes are public** and signed; a member may change their vote until the period ends.
+- **Final tally:** at the close a council member signs the list of votes that counted (S3). Clients use it instead of recounting. Two conflicting tallies leave the proposal disputed until 3 council members endorse one.
 
 ### Lifecycle
 
 1. **Draft:** any member writes a proposal; payouts carry amount, recipient address and purpose.
 2. **Voting:** open for the voting period.
-3. **Passed** or **Rejected:** fixed once the period ends or the result is certain.
+3. **Passed** or **Rejected:** fixed by the signed final tally, once the period ends or the result is certain.
 4. **Binding step:** passed payouts join the next payout round; roster and rule changes await council endorsement.
 5. **Done** with a receipt, **Declined** by the council with a public reason, or **Lapsed** if not made binding within 2 payout rounds.
 
 Past proposals of every status stay visible forever. The council may decline a passed payout, but must publish why; that refusal is itself part of the public record.
+
+Proposal numbers (BOSA-0007) are not stored in events. Every client numbers valid proposals by publication time, then event id, so all clients show the same numbers without a coordinator.
 
 ## Proposal fields
 
@@ -269,22 +275,28 @@ All payouts passed since the last round go out together in one monthly transacti
 
 All DAO activity is signed Nostr events, published to the DAO's own relay plus at least two public relays. Every client rebuilds the DAO's state from these events and the chain; nothing is trusted because a server said so.
 
-Every event carries a `dao` tag holding the DAO id (the hash of its genesis config) and a `v` tag with the format version. Kind numbers are provisional and must be checked against the Nostr kind registry before v1.
+Every event carries a `D` tag holding the DAO id and a `v` tag with the protocol version. The DAO id is the SHA-256 of the canonical genesis config, so it never changes. Kinds 3570–3585 are a provisional block of regular events, so relays keep the full history; they must be checked against the Nostr kind registry before v1.
 
-| Event | Signed by | Content | Valid when |
+| Event (kind) | Signed by | Content | Valid when |
 | --- | --- | --- | --- |
-| `dao.genesis` | Founding council member | Initial config: name, rules, council identity keys, xpubs, descriptor, relays | Endorsed by 3 council identity keys |
-| `dao.endorse` | Council member (identity key) | Hash of a roster, rules or config version | Signer is on the current council |
-| `dao.roster` | Any council member | Full member list with version number and previous-version hash | 3 endorsements of its hash |
-| `dao.proposal` | Member | Type, title, body, and for payouts: outputs (address, amount in sats) and purpose | Signer is on the roster at publication |
-| `dao.vote` | Member | Proposal id, yes / no / abstain | Signer on the roster; latest vote per member counts |
-| `dao.round` | Council member | Payout round: proposal ids, unsigned PSBT, fee rate | PSBT outputs match exactly the passed proposals listed |
-| `dao.sign` | Council member (identity key) | Round id, partially signed PSBT or a decline with reason | Signature verifies against that member's treasury key |
-| `dao.receipt` | Any council member | Round id, txid, block height | Transaction confirmed on chain |
-| `dao.anchor` | Any member | Digest of a closed decision, OpenTimestamps proof | Proof verifies against Bitcoin |
-| `dao.listing` | Council member | Name, relays, descriptor, site link, software version | Endorsed by 3 council identity keys |
+| `dao.genesis` (3570) | Founding council member | Initial config: name, rules, council identity keys, xpubs, descriptor, relays | Its hash is the DAO id; endorsed by 3 council identity keys |
+| `dao.endorse` (3571) | Council member (identity key) | Hash of a genesis, roster, rules, key replacement, tally or listing | Signer is on the council in effect; the object takes effect at the third endorsement |
+| `dao.roster` (3572) | Any council member | Full member list with version number, previous-version hash and the basis for each change | 3 endorsements; every change backed by a passed proposal, a leave or a key replacement |
+| `dao.rules` (3573) | Any council member | Rules with version number, previous-version hash and the passed proposal behind it | 3 endorsements; backed by a passed rules change |
+| `dao.proposal` (3574) | Member | Type, title, summary, optional link with fingerprint, language, and a payload per type (payouts: recipient and outputs) | Signer is on the roster at publication; payload valid for its type |
+| `dao.confirm` (3575) | Payout recipient | Proposal id, the confirmed address, optional BIP-322 signature | Address is in the proposal's outputs |
+| `dao.vote` (3576) | Member | Proposal id, yes / no / abstain | Signer eligible; latest vote per member counts |
+| `dao.tally` (3577) | Council member | Proposal id, close time, roster and rules versions, votes counted and excluded with reasons, result | Published after the close; only one undisputed tally per proposal |
+| `dao.verify` (3578) | Council member | Candidate key, in person or remote, short code | Short code matches the candidate key |
+| `dao.rekey` (3579) | Council member | Old key, new key, mode, short code | 3 endorsements; remote also needs a second council verification |
+| `dao.leave` (3580) | Member leaving | Empty | Signer is not on the council |
+| `dao.round` (3581) | Council member | Payout round: proposal ids, unsigned PSBT, fee rate and fee | PSBT outputs match exactly the passed proposals listed; change to the treasury; fee within the cap |
+| `dao.sign` (3582) | Council member (identity key) | Round id, partially signed PSBT or a decline with reason | Signature verifies against that member's treasury key |
+| `dao.receipt` (3583) | Any council member | Round id, txid, block height | Transaction confirmed on chain and matches the round |
+| `dao.anchor` (3584) | Any member | Digest of a closed decision, the event ids it covers, OpenTimestamps proof | Proof verifies against Bitcoin |
+| `dao.listing` (3585) | Council member | Name, relays, descriptor, site link, software version | Endorsed by 3 council identity keys |
 
-The repo publishes these formats as a short protocol document, so another team can write a compatible client.
+`docs/protocol.md` in the repo defines every event exactly: its fields, validity rules, the PSBT requirements and the order in which a client rebuilds the DAO's state. Another team can write a compatible client from it alone. Where this table and the protocol differ, the protocol is the more precise.
 
 ## Public record and anchoring
 
@@ -300,7 +312,7 @@ The public pages:
 
 ### Anchoring
 
-When a proposal closes, any member's browser computes a digest of the proposal and all its votes and timestamps it with OpenTimestamps, which batches many hashes into one Bitcoin transaction at no cost to the DAO. The proof is published as a `dao.anchor` event. Anchoring proves the record existed unchanged at that block; it does not keep the record available, so each council member keeps a full export of the DAO's events (one button on the site).
+When a proposal closes, any member's browser computes a digest of the proposal, its votes, its address confirmations and its signed tally and timestamps it with OpenTimestamps, which batches many hashes into one Bitcoin transaction at no cost to the DAO. The proof is published as a `dao.anchor` event. Anchoring proves the record existed unchanged at that block; it does not keep the record available, so each council member keeps a full export of the DAO's events (one button on the site).
 
 ## Fork kit, config and dashboard
 
@@ -408,9 +420,9 @@ Repo: btc-dao. Stack: static site, bundled and pinned libraries (`@scure/btc-sig
 - [ ] Is a quorum of one third right for a small founding group, or should it start higher?
 - [ ] Should member votes on payouts be public by name, or tallies only?
 - [ ] Where is the DAO relay hosted, and by whom?
-- [ ] Which free static host for the site, and under which domain?
+- [ ] Which free static host for the site, and under which domain? The domain cannot change later without every member replacing their key.
 - [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
 - [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2.
-- [ ] Which provisional Nostr kind numbers to claim, and do any collide?
+- [ ] Are kinds 3570–3585 and the D tag free in the Nostr kind registry?
 - [ ] Legal check (Italy, UK): confirm keyless coordination software is not custody.
 - [ ] Decided: the software repo is named btc-dao; BOSA DAO is its first instance.
