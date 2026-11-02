@@ -36,20 +36,22 @@ Events that refer to another event add `["e", <event id>]`. Events about a perso
 
 A council member has both. The config maps each council member's identity key to their xpub and fingerprint, so a client can check that a `dao.sign` event's PSBT signature comes from the treasury key of the person who signed the event.
 
-### 1.5 Identity key from a passkey
+### 1.5 Identity key and passkey
 
-Members do not store their identity key; it is derived each time from their passkey using the WebAuthn PRF extension:
+The identity key is a random secp256k1 secret generated in the browser when the member joins. The member's passkey protects it but does not create it, so a new passkey on any device or domain can take on the same key.
 
-1. `salt = sha256("btc-dao/identity/v1/" || dao_id)`, so the same passkey gives a different identity in each DAO and memberships cannot be linked across DAOs.
-2. `prf = WebAuthn PRF output(salt)` (32 bytes).
-3. `seed = HKDF-SHA256(ikm = prf, salt = "", info = "btc-dao identity key v1", length = 32)`.
-4. `secret = seed mod n` (secp256k1 order). If `secret == 0`, derivation fails and the member uses the password route.
+1. `salt = sha256("btc-dao/identity/v1/" || dao_id)`, so one passkey's outputs cannot be linked across DAOs.
+2. `prf = WebAuthn PRF output(salt)` (32 bytes) for the member's credential.
+3. `wrap_key = HKDF-SHA256(ikm = prf, salt = "", info = "btc-dao identity wrap v1", length = 32)`.
+4. `ciphertext = XChaCha20-Poly1305(wrap_key, nonce, secret)`, with a random 24-byte nonce.
 
-A passkey is bound to the website's domain. **Changing the DAO's domain makes every member's passkey unusable for it**, so the domain must be chosen once and kept; a move needs every member to go through key replacement.
+The ciphertext is kept in the browser and published as a `dao.keywrap` event (section 5.4), so a synced passkey on another device can fetch and open it. A member may register several passkeys, for example a phone and a YubiKey; each has its own `dao.keywrap`.
 
-The WebAuthn relying-party id is the config's `passkeyDomain`, set to the DAO's registrable domain (for BOSA DAO, `bosadao.it`), not to the full host. Pages on any subdomain, such as `signet.bosadao.it` for the trial, then use the same passkeys. Because the derivation salt includes the DAO id, the signet and mainnet DAOs still give each member two different identities.
+Where the phone has no PRF support, the secret stays in that browser's storage and the member uses their identity card (section 1.7) on other devices. Nostr users may instead sign with their existing key through a NIP-07 browser extension and back it up their own way.
 
-The password route stores the same kind of key encrypted with a password-derived key (scrypt, then XChaCha20-Poly1305) in a file the member keeps. Nostr users may instead sign with their existing key through a NIP-07 browser extension.
+The WebAuthn relying-party id is the config's `passkeyDomain`, set to the DAO's registrable domain (for BOSA DAO, `bosadao.it`), not to the full host. Pages on any subdomain, such as `signet.bosadao.it` for the trial, then use the same passkeys. The signet and mainnet DAOs have different DAO ids, so each member has a separate identity in each.
+
+A passkey only works on its own domain. If the DAO moves to a new address (section 7.2), members restore from their identity cards there and register new passkeys. Their identity keys, and so the roster and history, are unchanged.
 
 ### 1.6 Short code
 
@@ -59,9 +61,26 @@ The code read aloud at onboarding is derived from the candidate's public key:
 
 A key swapped in transit gives a different short code, which is the whole point of reading it aloud.
 
+### 1.7 Identity cards
+
+Identity cards are the member's paper backup of their identity key: one card for an ordinary member (optional), two for a council member (required before the key ceremony). There are no passwords. Cards are printed straight from the browser and never saved as files.
+
+| Card | QR payload |
+| --- | --- |
+| Member card | `BTCDAO:1:M:<dao8>:<secret>` |
+| Council card 1 | `BTCDAO:1:C1:<dao8>:<share1>:<pair>` |
+| Council card 2 | `BTCDAO:1:C2:<dao8>:<share2>:<pair>` |
+
+- `dao8` is the first 8 hex characters of the DAO id; `secret`, `share1` and `share2` are 64 hex characters; `pair` is 8 random hex characters shared by both cards of one printing. All hex is upper case, so the payload fits QR alphanumeric mode (version 5 or smaller, about 3 cm square in print).
+- `share1` is 32 random bytes and `share2 = secret XOR share1`. Either share alone is uniformly random and reveals nothing about the key.
+- Reprinting council cards draws a new `share1` and `pair`, so an old card no longer combines with a new one, and the app rejects mismatched `pair` values at once.
+- The printed text beside the QR (never inside it) gives the DAO name, the member's pseudonym, their short code, the card label ("Card 1 of 2") and the print date.
+
+Restoring: the app scans the card (council: both), rebuilds the secret, checks it is between 1 and n−1, derives the public key and shows its short code. It continues only if that key is on the current roster, or has a valid `dao.verify` for a candidate. It then registers a new passkey and publishes a `dao.keywrap` for it.
+
 ## 2. Kinds
 
-All DAO events are **regular** events (kinds 1000–9999), so relays keep every one and the full history stays auditable. The numbers below are a provisional block and must be checked against the Nostr kind registry before v1.
+All DAO events are **regular** events (kinds 1000–9999), so relays keep every one and the full history stays auditable. The numbers below are a provisional block (3570–3586) and must be checked against the Nostr kind registry before v1.
 
 | Kind | Name | Signed by | Section |
 | --- | --- | --- | --- |
@@ -81,8 +100,9 @@ All DAO events are **regular** events (kinds 1000–9999), so relays keep every 
 | 3583 | `dao.receipt` | Council member | 6.3 |
 | 3584 | `dao.anchor` | Any member | 7.1 |
 | 3585 | `dao.listing` | Council member | 7.2 |
+| 3586 | `dao.keywrap` | Member | 5.4 |
 
-Compared with the spec v0.1 event table, this adds `dao.rules` (rules versions get their own event, like rosters), `dao.confirm` (recipient address confirmation), `dao.tally` (requirement S3) and the three onboarding events.
+Compared with the spec v0.1 event table, this adds `dao.rules` (rules versions get their own event, like rosters), `dao.confirm` (recipient address confirmation), `dao.tally` (requirement S3), the three onboarding events and `dao.keywrap` (passkey-protected identity keys).
 
 ## 3. Foundation: genesis, endorsements, rosters, rules
 
@@ -229,6 +249,12 @@ Takes effect with `threshold` endorsements (object `rekey`); remote mode also ne
 
 Content: `{}`. Signed by the member leaving. Not valid for council members, who leave through a `change_council` proposal. From its `created_at`, the member's votes on still-open proposals are withdrawn; the next roster version drops them.
 
+### 5.4 `dao.keywrap`
+
+Tags: `["c", <sha256 of the passkey credential id, hex>]`. Content: `{"nonce": "<24-byte hex>", "ct": "<hex ciphertext>"}` as in section 1.5.
+
+Signed by the identity key it protects, which shows the publisher held that key. Valid when the signer is on the roster or is a candidate with a valid `dao.verify`. The latest event per `c` tag counts. After a passkey sign-in, a client fetches it with the filter `{"kinds": [3586], "#D": [dao_id], "#c": [sha256(credential id)]}` and opens it with the PRF output. The ciphertext is public; its security rests on the 32-byte PRF output, which never leaves the passkey's device.
+
 ## 6. Treasury
 
 ### 6.1 `dao.round`
@@ -275,6 +301,8 @@ Tags: `["e", <tally id>]`. Content: `{"digest": "<sha256>", "covers": ["<event i
 
 Content: `{"name": "BOSA DAO", "site": "https://...", "relays": ["wss://..."], "descriptor": "<public descriptor>", "software": "btc-dao 0.1.0"}`. Takes effect with `threshold` endorsements. Dashboards list only endorsed listings.
 
+The `site` of the latest endorsed listing is the DAO's address. Moving the DAO to a new domain is done by publishing a new listing and collecting `threshold` endorsements; no member needs re-verifying. The card-restore screen shows the endorsed address and its endorsements, and clients warn when they are opened at any other address. Members should never scan an identity card on an address the council has not endorsed.
+
 ## 8. Rebuilding state
 
 A client rebuilds a DAO in this order, from events filtered by `#D` and from the chain:
@@ -292,6 +320,7 @@ Events that fail validation are kept and shown in a "rejected" view with the rea
 
 - Confirm the kind numbers and the `D` tag do not collide with existing NIPs.
 - Test cases for every validity rule above (S4), including duplicate and out-of-order events and events from other DAOs.
-- Confirm passkey PRF support on members' phones (section 1.5).
+- Confirm passkey PRF support on members' phones, including with a YubiKey over USB and NFC (section 1.5).
+- Confirm phones can print an identity card straight from the browser without leaving a saved PDF (section 1.7).
 - Confirm SeedSigner accepts the PSBT layout in section 6.1 and verifies change against the loaded descriptor (S7).
 - Decide whether the OpenTimestamps step runs in the browser or needs a small helper.

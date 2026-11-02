@@ -69,16 +69,33 @@ Each person has an identity key for signing in and voting, and each council memb
 
 | Key | Holder | Used for | Lives in | If lost |
 | --- | --- | --- | --- | --- |
-| Identity key (Nostr) | Every member | Sign-in, proposals, votes, endorsements | Derived from the member's passkey each time; never stored | A synced passkey restores it on any device; otherwise key replacement after in-person re-verification |
+| Identity key (Nostr) | Every member | Sign-in, proposals, votes, endorsements | Random key, encrypted by the member's passkey; backed up on printed identity cards (1 for members, 2 for council) | A synced passkey or the identity card(s) restore it on any device or address; otherwise key replacement after re-verification |
 | Treasury key | Each council member | Signing payout rounds and migrations | SeedQR card carried to signing; steel plate kept at home; loaded into the shared SeedSigner only while signing | Threshold still met; council migrates to a new multisig |
 
 Sign-in for members:
 
 1. A member opens the DAO site and taps **Join** or **Sign in**.
-2. The phone creates a passkey (fingerprint or face), and the identity key is derived from it using the passkey PRF extension, never stored. The same passkey always gives the same key, so any device where the member's passkey syncs restores their identity automatically. Where the phone cannot do this, a password plus an encrypted backup file is the fallback, and only then must the member keep something safe.
+2. The phone creates a passkey (fingerprint or face) and a random identity key. The passkey encrypts the key using the passkey PRF extension; the encrypted copy is kept in the browser and on the DAO's relays, so any device where the member's passkey syncs opens it automatically. Where the phone cannot do this, the key stays in that browser and the identity card is used on other devices.
 3. Members who already use Nostr can sign in with their existing key through a browser extension instead.
 
-The derivation is salted with the DAO id, so one passkey gives a different, unlinkable identity in each DAO. Passkeys are tied to the site's domain, so a DAO chooses its domain once and keeps it: moving it means every member goes through key replacement.
+### Identity cards
+
+Every member can also hold their identity key on paper, so the DAO survives losing its domain or a member losing their passkey. There are no passwords and no files to keep.
+
+| Who | Cards | What each card holds | Needed to restore |
+| --- | --- | --- | --- |
+| Ordinary member | 1, optional | The identity key as a QR code | That card |
+| Council member | 2, required before the key ceremony | One random half of the identity key; either card alone reveals nothing | Both cards |
+
+- **Printing:** from the member's profile page, straight from the browser to the printer. The card is never saved as a file or shared, so no digital copy is left behind. Each card also shows the DAO name, the member's pseudonym and short code, and for council "Card 1 of 2" or "Card 2 of 2".
+- **Keeping:** like a house key. Council members keep their two cards in different places, and neither with their SeedQR card.
+- **Restoring:** on a new phone, after losing a passkey, or at a new web address, the member scans their card (council: both), checks the short code shown, and creates a new passkey, which then protects the same key. Identity, roster and votes carry on, with no re-verification.
+- **Lost or exposed cards:** an ordinary member's card is their identity, so a finder could vote in their name until a key replacement; it can never move funds. A lost card is followed by a key replacement. One council card alone is useless: the member prints a fresh pair, which makes the remaining old card worthless too. If both council cards are exposed, the council replaces the key.
+- **Members who skip the card** recover a lost passkey by key replacement.
+
+### Moving to a new address
+
+Passkeys are tied to the DAO's domain, and the passkey encryption is salted with the DAO id, so one passkey never links a member across DAOs. If the domain is lost, the app goes up at a new address and 3 council members endorse it in a signed `dao.listing` event. Members open the endorsed address, scan their cards and create a new passkey. The restore screen shows the endorsement, and members never scan a card on an address the council has not announced.
 
 A member's identity key never controls money, so a phished member can cast false votes but cannot move funds: the council still has to sign.
 
@@ -98,7 +115,7 @@ A new member joins in about two minutes at a meetup and writes nothing down; thr
 
 ### Rules for onboarding
 
-- **Nothing to write down** when the passkey route works. The password route is the only case where a member keeps a password and backup file, and the screen says so plainly.
+- **Nothing to write down**: the passkey protects the key day to day, and the backup is a printed identity card (two for council members).
 - **Privacy consent is its own tick box:** the pseudonym and every vote are public and permanent. Real names are never required.
 - **Age:** members must be 18 or over, confirmed by tick box and stated in the charter.
 - **While waiting:** the done screen says voting opens after the 7-day vote and 3 council confirmations; the member sees their admission status at each sign-in.
@@ -275,7 +292,7 @@ All payouts passed since the last round go out together in one monthly transacti
 
 All DAO activity is signed Nostr events, published to the DAO's own relay plus at least two public relays. Every client rebuilds the DAO's state from these events and the chain; nothing is trusted because a server said so.
 
-Every event carries a `D` tag holding the DAO id and a `v` tag with the protocol version. The DAO id is the SHA-256 of the canonical genesis config, so it never changes. Kinds 3570–3585 are a provisional block of regular events, so relays keep the full history; they must be checked against the Nostr kind registry before v1.
+Every event carries a `D` tag holding the DAO id and a `v` tag with the protocol version. The DAO id is the SHA-256 of the canonical genesis config, so it never changes. Kinds 3570–3586 are a provisional block of regular events, so relays keep the full history; they must be checked against the Nostr kind registry before v1.
 
 | Event (kind) | Signed by | Content | Valid when |
 | --- | --- | --- | --- |
@@ -294,7 +311,8 @@ Every event carries a `D` tag holding the DAO id and a `v` tag with the protocol
 | `dao.sign` (3582) | Council member (identity key) | Round id, partially signed PSBT or a decline with reason | Signature verifies against that member's treasury key |
 | `dao.receipt` (3583) | Any council member | Round id, txid, block height | Transaction confirmed on chain and matches the round |
 | `dao.anchor` (3584) | Any member | Digest of a closed decision, the event ids it covers, OpenTimestamps proof | Proof verifies against Bitcoin |
-| `dao.listing` (3585) | Council member | Name, relays, descriptor, site link, software version | Endorsed by 3 council identity keys |
+| `dao.listing` (3585) | Council member | Name, site address, relays, descriptor, software version | Endorsed by 3 council identity keys; the latest endorsed site is the DAO's address |
+| `dao.keywrap` (3586) | Member (identity key) | Hash of a passkey credential id, and the identity key encrypted by that passkey | Signer is a member; the latest per credential counts |
 
 `docs/protocol.md` in the repo defines every event exactly: its fields, validity rules, the PSBT requirements and the order in which a client rebuilds the DAO's state. Another team can write a compatible client from it alone. Where this table and the protocol differ, the protocol is the more precise.
 
@@ -362,7 +380,7 @@ The signing device's screen is the final authority: no attack on the website, re
 | Council member's SeedQR card or seed lost or exposed | Attacker holds 1 of 3 needed keys | Report at once; migrate before any further loss; cards never stored together |
 | Three council members collude | Funds moved against the member vote | Public record of every payout and vote; members choose keyholders; council-change by members' 2/3 vote |
 | Software or site disappears | No interface | Recovery sheet plus 3 seeds restore in Sparrow |
-| Domain lost or not renewed | Members' passkeys stop working; the site has to move | Several years paid with auto-renew; two council members can reach the registrar account; the recovery sheet still recovers funds |
+| Domain lost or not renewed | Members' passkeys stop working; the site has to move | Several years paid with auto-renew; two council members can reach the registrar account; members restore from identity cards at a council-endorsed new address; the recovery sheet still recovers funds |
 | Device vendor bug | Faulty signing on one brand | Mixed devices: no single brand holds 3 keys |
 
 The software never holds a key that can move funds, so it is coordination software, not a custodian. That position should be confirmed with an adviser in Italy and the UK before mainnet, given MiCA.
@@ -378,7 +396,7 @@ The design review found the treasury safe for a capped trial, provided the requi
 | S3 | At voting close, a council member publishes a signed final tally listing exactly which votes counted; the tally is what gets anchored, and late events are ignored | Nostr timestamps are set by the signer, so votes can be backdated | Phase 1 |
 | S4 | Written state rules plus test cases for edge cases: duplicate votes, a member removed mid-vote, out-of-order events, events from other DAOs | Bugs in rebuilding state from events could allow forged roster or rule changes | Phase 1 |
 | S5 | A fee ceiling in the rules; the app refuses to show Sign above it | A malicious or mistaken round could burn funds in fees | Phase 1 |
-| S6 | Identity keys encrypted in the browser; S2 measures protect them | Stolen identity keys allow false votes, never fund movement | Phase 1 |
+| S6 | Identity keys encrypted by the passkey in the browser; identity cards printed straight from the browser, never saved as files; S2 measures protect them | Stolen identity keys allow false votes, never fund movement | Phase 1 |
 | S7 | The wallet descriptor is loaded on the SeedSigner at every signing and change shows as verified; skipping verification is not allowed. SeedSigner shows change addresses on one line only, so this check is what protects the change | Otherwise a round could quietly redirect the change | Phase 2 (hard gate) |
 | S8 | Main and spare SeedSigner bought from different sources, sealed between rounds; signing times not announced | Hardware tampering, and three SeedQR cards in one room | Phase 3 |
 | S9 | Treasury capped during the trial at an amount the community can afford to lose; the cap is a rule changed only by a two-thirds vote | Limits the cost of any flaw not yet found | Phase 3 |
@@ -426,6 +444,6 @@ Repo: btc-dao. Stack: static site, bundled and pinned libraries (`@scure/btc-sig
 - [ ] Which free static host for the site? Domains decided: btcdao.tech for the project, bosadao.it for BOSA DAO.
 - [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
 - [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2.
-- [ ] Are kinds 3570–3585 and the D tag free in the Nostr kind registry?
+- [ ] Are kinds 3570–3586 and the D tag free in the Nostr kind registry?
 - [ ] Legal check (Italy, UK): confirm keyless coordination software is not custody.
 - [ ] Decided: the software repo is named btc-dao; BOSA DAO is its first instance.
