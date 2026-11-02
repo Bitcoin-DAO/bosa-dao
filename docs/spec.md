@@ -254,7 +254,7 @@ Statements use the common fields only.
 
 1. The recipient shows a fresh receive address from their own wallet as a QR code.
 2. The proposer scans it into the address box, or the recipient enters it if they are a member.
-3. If proposer and recipient differ, the recipient confirms the address on the proposal page before voting closes.
+3. If proposer and recipient differ, the recipient confirms the address on the proposal page. Confirming is the recipient's responsibility and can happen at any time; a passed payout joins a payout round only once it is confirmed, and lapses like any other if it is not made binding within 2 rounds.
 4. At signing, each council member checks the address on the SeedSigner screen against the proposal page.
 
 Proposals are public forever, so recipients should use an address not reused elsewhere. A Lightning address option follows once payouts by swap arrive.

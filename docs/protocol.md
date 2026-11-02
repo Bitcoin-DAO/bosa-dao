@@ -178,7 +178,7 @@ Valid when:
 
 Tags: `["e", <proposal id>]`. Content: `{"address": "<address being confirmed>"}`, optionally with `"bip322": "<signature>"` when the recipient's wallet can sign a message with that address.
 
-Valid when the address appears in the proposal's outputs. A payout whose recipient is not the proposer needs a valid `dao.confirm` for each output before it can enter a round. A BIP-322 signature proves control of the address; without it, the confirmation shows only that someone with the confirmation link agreed.
+Valid when the address appears in the proposal's outputs. A payout whose recipient is not the proposer needs a valid `dao.confirm` for each output before it can enter a round. There is no deadline: confirming is the recipient's responsibility, and it may come before, during or after the vote. A passed payout that is still unconfirmed waits, and lapses under the usual rule if it is not made binding within the lapse limit (2 rounds for BOSA DAO). A BIP-322 signature proves control of the address; without it, the confirmation shows only that someone with the confirmation link agreed.
 
 ### 4.3 `dao.vote`
 

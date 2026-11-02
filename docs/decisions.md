@@ -12,7 +12,7 @@
 | Member identity | Nostr key derived from the member's passkey (PRF), never stored; password plus backup file as fallback |
 | Signing (BOSA trial) | One shared SeedSigner plus a spare; each council member has their own verified SD card, a 12-word CompactSeedQR card (21x21) and a steel plate at home. No passphrase in the trial |
 | Addresses | Shown as SeedSigner shows them: first 7 and last 7 characters highlighted, middle in full; compared in full |
-| Proposals | Short binding summary plus optional link with a fingerprint; wallet address in its own validated field; recipient confirms the address |
+| Proposals | Short binding summary plus optional link with a fingerprint; wallet address in its own validated field; recipient confirms the address, with no deadline: an unconfirmed passed payout waits and lapses after 2 rounds |
 | Vote counting | A council member signs the final tally at close; the tally is anchored with OpenTimestamps |
 | Onboarding | Sponsor plus council verification, in person or by video call (two council members for remote); consent to public record and age 18+ |
 | Leaving and key loss | Members leave without a vote; lost keys are replaced after re-verification and 3 council endorsements |
