@@ -18,6 +18,11 @@
 | Leaving and key loss | Members leave without a vote; lost keys are replaced after re-verification and 3 council endorsements |
 | Recovery | Recovery sheet with the descriptor is essential: 3 seeds alone cannot recover a multisig |
 | Repo | `btc-dao` under the Bitcoin-DAO organisation; BOSA DAO is the first instance. Licence added last |
+| Protocol | Defined in `protocol.md`: Nostr events in a provisional kind block 3570–3585, all regular so history is kept; every event tagged with the DAO id |
+| DAO id | SHA-256 of the canonical (RFC 8785) genesis config; never changes |
+| Identity per DAO | The passkey-derived key is salted with the DAO id, so one passkey gives unlinkable identities in different DAOs |
+| Domain | Chosen once and kept: passkeys are bound to the domain, so a move means every member replaces their key |
+| Proposal numbers | Not stored in events; every client derives them by sorting proposals by time, then id |
 
 ## Open questions
 
@@ -29,6 +34,6 @@
 - [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
 - [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2
 - [ ] Is passkey PRF supported on the phones BOSA members use?
-- [ ] Which provisional Nostr kind numbers to claim?
+- [ ] Are kinds 3570–3585 and the `D` tag free in the Nostr registry?
 - [ ] Legal check (Italy, UK): confirm keyless coordination software is not custody
 - [ ] Founding charter text, and the "first wallet in 5 minutes" guide
