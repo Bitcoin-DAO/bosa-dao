@@ -1,5 +1,6 @@
 {
   "configVersion": 1,
+  "stage": "testnet",
   "name": "BOSA DAO",
   "description": "Tesoreria bitcoin della comunità di Bosa. Prova di concetto.",
   "languages": [

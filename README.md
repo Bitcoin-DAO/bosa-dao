@@ -1,6 +1,6 @@
 # BOSA DAO
 
-**This is BOSA DAO's own copy of [btc-dao](https://github.com/Bitcoin-DAO/btc-dao)**, for the trial on testnet4. The site is at **https://bitcoin-dao.github.io/bosa-dao** and is built from `config/dao.json` by `.github/workflows/pages.yml`. Code changes are made in btc-dao and pulled in here; only `config/dao.json` and this note are BOSA DAO's own.
+**This is BOSA DAO's own copy of [btc-dao](https://github.com/Bitcoin-DAO/btc-dao) for the testnet stage** (stage 2 of 3: practice, testnet, mainnet). It runs btc-dao 0.1.0. The site is at **https://bitcoin-dao.github.io/bosa-dao** and is built from `config/dao.json` by `.github/workflows/pages.yml`. Code changes are made in btc-dao and pulled in here; only `config/dao.json` and this note are BOSA DAO's own.
 
 After the founding meeting, add `"daoId": "<the DAO id shown on the setup page>"` to `config/dao.json`.
 
