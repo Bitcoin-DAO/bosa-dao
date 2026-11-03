@@ -87,7 +87,7 @@ Every member can also hold their identity key on paper, so the DAO survives losi
 | Ordinary member | 1, optional | The identity key as a QR code | That card |
 | Council member | 2, required before the key ceremony | One random half of the identity key; either card alone reveals nothing | Both cards |
 
-- **Printing:** from the member's profile page, straight from the browser to the printer. The card is never saved as a file or shared, so no digital copy is left behind. Each card also shows the DAO name, the member's pseudonym and short code, and for council "Card 1 of 2" or "Card 2 of 2".
+- **Printing:** from the member's profile page, straight from the browser to the printer. The card is never saved as a file or shared, so no digital copy is left behind. Every card also carries one fixed line: if bosadao.it stops working, find the new address at btcdao.tech or ask a council member. Each card also shows the DAO name, the member's pseudonym and short code, and for council "Card 1 of 2" or "Card 2 of 2".
 - **Keeping:** like a house key. Council members keep their two cards in different places, and neither with their SeedQR card.
 - **Restoring:** on a new phone, after losing a passkey, or at a new web address, the member scans their card (council: both), checks the short code shown, and creates a new passkey, which then protects the same key. Identity, roster and votes carry on, with no re-verification.
 - **Lost or exposed cards:** an ordinary member's card is their identity, so a finder could vote in their name until a key replacement; it can never move funds. A lost card is followed by a key replacement. One council card alone is useless: the member prints a fresh pair, which makes the remaining old card worthless too. If both council cards are exposed, the council replaces the key.
@@ -95,7 +95,7 @@ Every member can also hold their identity key on paper, so the DAO survives losi
 
 ### Moving to a new address
 
-Passkeys are tied to the DAO's domain, and the passkey encryption is salted with the DAO id, so one passkey never links a member across DAOs. If the domain is lost, the app goes up at a new address and 3 council members endorse it in a signed `dao.listing` event. Members open the endorsed address, scan their cards and create a new passkey. The restore screen shows the endorsement, and members never scan a card on an address the council has not announced.
+Passkeys are tied to the DAO's domain, and the passkey encryption is salted with the DAO id, so one passkey never links a member across DAOs. If the domain is lost, the app goes up at a new address and 3 council members endorse it in a signed `dao.listing` event. Members open the endorsed address, scan their cards and create a new passkey. The restore screen shows the endorsement, and members never scan a card on an address the council has not announced. Members learn the new address in two ways that do not depend on the lost domain: the DAO's entry on btcdao.tech, a separate domain, and an announcement by the council at a meetup or on a call. The DAO relay goes down with the domain, since it sits at relay.bosadao.it; the public relays still hold every event, and the endorsed listing names the new relays.
 
 A member's identity key never controls money, so a phished member can cast false votes but cannot move funds: the council still has to sign.
 
@@ -365,7 +365,7 @@ For a group without a developer:
 
 ### Read-only dashboard
 
-A separate static site lists every DAO that publishes a `dao.listing` event: name, balance, open proposals, payout history and software version, with outdated versions flagged. It holds no keys and changes nothing; anyone can run their own copy, and DAOs work normally if it goes down.
+A separate static site lists every DAO that publishes a `dao.listing` event: name, balance, open proposals, payout history and software version, with outdated versions flagged. It shows each DAO's endorsed address, so members can find a DAO that has moved. It holds no keys and changes nothing; anyone can run their own copy, and DAOs work normally if it goes down.
 
 ## Threat model
 

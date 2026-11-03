@@ -11,7 +11,7 @@
 | Roles | Members vote; council members hold treasury keys. Voting and signing rights are separated by keys, not only by policy |
 | Member identity | A random Nostr key, encrypted by the member's passkey (PRF) and kept in the browser and on the relays, so a synced passkey opens it on any device |
 | Identity cards | Paper backup of the identity key as QR codes, printed straight from the browser, no passwords, no files. Ordinary members: one card, optional. Council: two cards, each holding one random half of the key, both needed, required before the key ceremony |
-| Moving address | If the domain is lost, the council endorses a new address in a `dao.listing`; members scan their cards there and make a new passkey. Same identities, no re-verification |
+| Moving address | If the domain is lost, the council endorses a new address in a `dao.listing`; members scan their cards there and make a new passkey. Same identities, no re-verification. Members find the new address on btcdao.tech (a separate domain) or from the council; every card carries that fallback line. The DAO relay on the lost domain is replaced, and public relays bridge the gap |
 | Signing (BOSA trial) | One shared SeedSigner plus a spare; each council member has their own verified SD card, a 12-word CompactSeedQR card (21x21) and a steel plate at home. No passphrase in the trial |
 | Addresses | Shown as SeedSigner shows them: first 7 and last 7 characters highlighted, middle in full; compared in full |
 | Proposals | Short binding summary plus optional link with a fingerprint; wallet address in its own validated field; recipient confirms the address, with no deadline: an unconfirmed passed payout waits and lapses after 2 rounds |

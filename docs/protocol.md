@@ -74,7 +74,7 @@ Identity cards are the member's paper backup of their identity key: one card for
 - `dao8` is the first 8 hex characters of the DAO id; `secret`, `share1` and `share2` are 64 hex characters; `pair` is 8 random hex characters shared by both cards of one printing. All hex is upper case, so the payload fits QR alphanumeric mode (version 5 or smaller, about 3 cm square in print).
 - `share1` is 32 random bytes and `share2 = secret XOR share1`. Either share alone is uniformly random and reveals nothing about the key.
 - Reprinting council cards draws a new `share1` and `pair`, so an old card no longer combines with a new one, and the app rejects mismatched `pair` values at once.
-- The printed text beside the QR (never inside it) gives the DAO name, the member's pseudonym, their short code, the card label ("Card 1 of 2") and the print date.
+- The printed text beside the QR (never inside it) gives the DAO name, the member's pseudonym, their short code, the card label ("Card 1 of 2"), the print date, and a fixed fallback line naming where to find the DAO if its site stops working: the project dashboard and the council (for BOSA DAO: "If bosadao.it stops working, find the new address at btcdao.tech or ask a council member").
 
 Restoring: the app scans the card (council: both), rebuilds the secret, checks it is between 1 and n−1, derives the public key and shows its short code. It continues only if that key is on the current roster, or has a valid `dao.verify` for a candidate. It then registers a new passkey and publishes a `dao.keywrap` for it.
 
@@ -302,6 +302,8 @@ Tags: `["e", <tally id>]`. Content: `{"digest": "<sha256>", "covers": ["<event i
 Content: `{"name": "BOSA DAO", "site": "https://...", "relays": ["wss://..."], "descriptor": "<public descriptor>", "software": "btc-dao 0.1.0"}`. Takes effect with `threshold` endorsements. Dashboards list only endorsed listings.
 
 The `site` of the latest endorsed listing is the DAO's address. Moving the DAO to a new domain is done by publishing a new listing and collecting `threshold` endorsements; no member needs re-verifying. The card-restore screen shows the endorsed address and its endorsements, and clients warn when they are opened at any other address. Members should never scan an identity card on an address the council has not endorsed.
+
+After a domain loss, members find the new address in two ways that do not depend on the lost domain: the project dashboard (btcdao.tech), which shows each DAO's latest endorsed `site`, and an announcement by the council in person or on a call. A DAO relay on the lost domain goes down with it. The public relays in the config still hold every event, so the new listing can be fetched there, and its `relays` field names the DAO's new relays.
 
 ## 8. Rebuilding state
 
