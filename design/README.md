@@ -42,7 +42,7 @@ To regenerate the PNGs after changing a screen, see `tools/render-mockups/`.
 
 ![Recovery sheet](screens/RecoverySheet.png)
 
-**Identity cards** (printable A4: one card for a member, two for a council member)
+**Identity card** (printable A4: one card each, members and council)
 
 ![Identity cards](screens/IdentityCards.png)
 

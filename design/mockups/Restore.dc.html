@@ -39,11 +39,6 @@ a{color:#1F6B70}a:hover{color:#10292E}
 
 <div style="background: #FCEBDD; border-radius: 12px; padding: 14px 16px; font-size: 14px; line-height: 1.5; color: #7A3306"><strong>Scansiona la tessera solo su un indirizzo annunciato dal Consiglio.</strong> Nel dubbio, controlla su btcdao.tech o chiedi a un membro del Consiglio.</div>
 
-<label style="min-height: 44px; display: flex; align-items: center; gap: 10px; font-size: 15px; line-height: 1.4">
-<input type="checkbox" checked="{{council}}" onChange="{{toggleCouncil}}" style="width: 22px; height: 22px; flex-shrink: 0; accent-color: #1F6B70">
-Faccio parte del Consiglio: ho due tessere
-</label>
-
 <button type="button" onClick="{{goScan}}" style="min-height: 52px; background: #B54D0A; color: #FFFFFF; border: 0; border-radius: 8px; font-family: inherit; font-size: 16px; font-weight: 600">Scansiona la tessera</button>
 <span style="font-size: 13px; line-height: 1.5; color: #4A5D61">Senza tessera? Vieni a un incontro: un membro del Consiglio verifica che sei tu e sostituisce la chiave.</span>
 </div>
@@ -51,17 +46,11 @@ Faccio parte del Consiglio: ho due tessere
 
 <sc-if value="{{isScan}}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 16px; align-items: center">
-<sc-if value="{{council}}" hint-placeholder-val="{{ false }}">
-<span style="align-self: stretch; font-size: 13px; color: #4A5D61">Tessera {{cardNum}} di 2</span>
-</sc-if>
-<h1 style="margin: 0; align-self: stretch; font-size: 24px; font-weight: 700">{{scanTitle}}</h1>
+<h1 style="margin: 0; align-self: stretch; font-size: 24px; font-weight: 700">Inquadra la tessera</h1>
 <div role="img" aria-label="Anteprima della fotocamera con la cornice per la tessera (segnaposto)" style="width: 300px; height: 300px; background: #10292E; border-radius: 12px; display: flex; align-items: center; justify-content: center">
 <div style="width: 180px; height: 180px; border: 3px solid #FFFFFF; border-radius: 8px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; color: #C5D3D4">Inquadra qui<br>il codice QR</div>
 </div>
 <span style="align-self: stretch; font-size: 14px; line-height: 1.5; color: #2E4448">Tieni la tessera ferma e ben illuminata. Nessuna foto viene salvata.</span>
-<sc-if value="{{showSecondNote}}" hint-placeholder-val="{{ false }}">
-<div style="align-self: stretch; background: #E3F0F0; border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.5; color: #1F4F53">Tessera 1 di 2 letta ✓ Da sola non rivela nulla: ora serve la seconda.</div>
-</sc-if>
 <button type="button" onClick="{{scanned}}" style="align-self: stretch; min-height: 52px; background: #B54D0A; color: #FFFFFF; border: 0; border-radius: 8px; font-family: inherit; font-size: 16px; font-weight: 600">Simula: tessera letta</button>
 <button type="button" onClick="{{goAddress}}" style="align-self: stretch; min-height: 44px; background: transparent; color: #10292E; border: 1px solid #9AAAAD; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600">Annulla</button>
 </div>
@@ -71,10 +60,10 @@ Faccio parte del Consiglio: ho due tessere
 <div style="display: flex; flex-direction: column; gap: 16px">
 <h1 style="margin: 0; font-size: 24px; font-weight: 700">Sei tu?</h1>
 <section style="background: #FFFFFF; border: 1px solid #D5DDDC; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center">
-<span aria-hidden="true" style="width: 56px; height: 56px; border-radius: 28px; background: #E3F0F0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700">{{initial}}</span>
+<span aria-hidden="true" style="width: 56px; height: 56px; border-radius: 28px; background: #E3F0F0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700">E</span>
 <strong style="font-size: 22px">{{name}}</strong>
-<span style="font-size: 14px; color: #4A5D61">{{role}}</span>
-<span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; letter-spacing: 0.08em">{{shortCode}}</span>
+<span style="font-size: 14px; color: #4A5D61">Membro dal 1 set</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; letter-spacing: 0.08em">7F3K · 29QD</span>
 <span style="font-size: 13px; line-height: 1.5; color: #4A5D61">Controlla che il codice breve coincida con quello stampato sulla tessera.</span>
 </section>
 <button type="button" onClick="{{goPasskey}}" style="min-height: 52px; background: #B54D0A; color: #FFFFFF; border: 0; border-radius: 8px; font-family: inherit; font-size: 16px; font-weight: 600">Sì, sono io</button>
@@ -109,26 +98,13 @@ Faccio parte del Consiglio: ho due tessere
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1100}}'>
 class Component extends DCLogic {
 renderVals() {
-const s = this.state || {};
-const step = s.step || 'address';
-const council = !!s.council;
-const card = s.card || 1;
-const go = (k) => () => this.setState({ step: k, card: 1 });
+const step = (this.state && this.state.step) || 'address';
+const go = (k) => () => this.setState({ step: k });
 return {
 isAddress: step === 'address', isScan: step === 'scan', isWho: step === 'who',
 isPasskey: step === 'passkey', isDone: step === 'done',
-council: council,
-cardNum: String(card),
-showSecondNote: council && card === 2,
-scanTitle: council ? (card === 1 ? 'Inquadra la tessera 1' : 'Ora la tessera 2') : 'Inquadra la tessera',
-name: council ? '@anna' : '@elena',
-initial: council ? 'A' : 'E',
-role: council ? 'Consiglio · membro dal 1 set' : 'Membro dal 1 set',
-shortCode: council ? 'K2M8 · 4TXA' : '7F3K · 29QD',
-toggleCouncil: () => this.setState({ council: !council }),
-scanned: () => {
-if (council && card === 1) { this.setState({ card: 2 }); } else { this.setState({ step: 'who', card: 1 }); }
-},
+name: '@elena',
+scanned: go('who'),
 goAddress: go('address'), goScan: go('scan'), goPasskey: go('passkey'), goDone: go('done')
 };
 }

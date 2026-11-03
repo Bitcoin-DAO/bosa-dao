@@ -63,20 +63,13 @@ A key swapped in transit gives a different short code, which is the whole point 
 
 ### 1.7 Identity cards
 
-Identity cards are the member's paper backup of their identity key: one card for an ordinary member (optional), two for a council member (required before the key ceremony). There are no passwords. Cards are printed straight from the browser and never saved as files.
+An identity card is a member's paper backup of their identity key: one card each, optional for ordinary members and required for council members before the key ceremony. There are no passwords. Cards are printed straight from the browser and never saved as files.
 
-| Card | QR payload |
-| --- | --- |
-| Member card | `BTCDAO:1:M:<dao8>:<secret>` |
-| Council card 1 | `BTCDAO:1:C1:<dao8>:<share1>:<pair>` |
-| Council card 2 | `BTCDAO:1:C2:<dao8>:<share2>:<pair>` |
+- QR payload: `BTCDAO:1:<dao8>:<secret>`, where `dao8` is the first 8 hex characters of the DAO id and `secret` is the 64-character key. All hex is upper case, so the payload fits QR alphanumeric mode (version 4 or smaller, about 3 cm square in print).
+- The printed text beside the QR (never inside it) gives the DAO name, the member's pseudonym, their short code, "Council" for a council member, the print date, and a fixed fallback line naming where to find the DAO if its site stops working: the project dashboard and the council (for BOSA DAO: "If bosadao.it stops working, find the new address at btcdao.tech or ask a council member").
+- Council members keep the card apart from their SeedQR card. A council identity key gives one of the `threshold` endorsements any change needs and can never move funds, so one lost card is handled by a key replacement.
 
-- `dao8` is the first 8 hex characters of the DAO id; `secret`, `share1` and `share2` are 64 hex characters; `pair` is 8 random hex characters shared by both cards of one printing. All hex is upper case, so the payload fits QR alphanumeric mode (version 5 or smaller, about 3 cm square in print).
-- `share1` is 32 random bytes and `share2 = secret XOR share1`. Either share alone is uniformly random and reveals nothing about the key.
-- Reprinting council cards draws a new `share1` and `pair`, so an old card no longer combines with a new one, and the app rejects mismatched `pair` values at once.
-- The printed text beside the QR (never inside it) gives the DAO name, the member's pseudonym, their short code, the card label ("Card 1 of 2"), the print date, and a fixed fallback line naming where to find the DAO if its site stops working: the project dashboard and the council (for BOSA DAO: "If bosadao.it stops working, find the new address at btcdao.tech or ask a council member").
-
-Restoring: the app scans the card (council: both), rebuilds the secret, checks it is between 1 and n−1, derives the public key and shows its short code. It continues only if that key is on the current roster, or has a valid `dao.verify` for a candidate. It then registers a new passkey and publishes a `dao.keywrap` for it.
+Restoring: the app scans the card, checks the `dao8` prefix matches this DAO, checks the secret is between 1 and n−1, derives the public key and shows its short code. It continues only if that key is on the current roster, or has a valid `dao.verify` for a candidate. It then registers a new passkey and publishes a `dao.keywrap` for it.
 
 ## 2. Kinds
 

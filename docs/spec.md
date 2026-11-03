@@ -69,7 +69,7 @@ Each person has an identity key for signing in and voting, and each council memb
 
 | Key | Holder | Used for | Lives in | If lost |
 | --- | --- | --- | --- | --- |
-| Identity key (Nostr) | Every member | Sign-in, proposals, votes, endorsements | Random key, encrypted by the member's passkey; backed up on printed identity cards (1 for members, 2 for council) | A synced passkey or the identity card(s) restore it on any device or address; otherwise key replacement after re-verification |
+| Identity key (Nostr) | Every member | Sign-in, proposals, votes, endorsements | Random key, encrypted by the member's passkey; backed up on a printed identity card | A synced passkey or the identity card(s) restore it on any device or address; otherwise key replacement after re-verification |
 | Treasury key | Each council member | Signing payout rounds and migrations | SeedQR card carried to signing; steel plate kept at home; loaded into the shared SeedSigner only while signing | Threshold still met; council migrates to a new multisig |
 
 Sign-in for members:
@@ -82,15 +82,15 @@ Sign-in for members:
 
 Every member can also hold their identity key on paper, so the DAO survives losing its domain or a member losing their passkey. There are no passwords and no files to keep.
 
-| Who | Cards | What each card holds | Needed to restore |
-| --- | --- | --- | --- |
-| Ordinary member | 1, optional | The identity key as a QR code | That card |
-| Council member | 2, required before the key ceremony | One random half of the identity key; either card alone reveals nothing | Both cards |
+| Who | Card | When |
+| --- | --- | --- |
+| Ordinary member | One card: the identity key as a QR code | Optional |
+| Council member | One card: the identity key as a QR code | Required before the key ceremony; kept apart from the SeedQR card |
 
-- **Printing:** from the member's profile page, straight from the browser to the printer. The card is never saved as a file or shared, so no digital copy is left behind. Every card also carries one fixed line: if bosadao.it stops working, find the new address at btcdao.tech or ask a council member. Each card also shows the DAO name, the member's pseudonym and short code, and for council "Card 1 of 2" or "Card 2 of 2".
-- **Keeping:** like a house key. Council members keep their two cards in different places, and neither with their SeedQR card.
-- **Restoring:** on a new phone, after losing a passkey, or at a new web address, the member scans their card (council: both), checks the short code shown, and creates a new passkey, which then protects the same key. Identity, roster and votes carry on, with no re-verification.
-- **Lost or exposed cards:** an ordinary member's card is their identity, so a finder could vote in their name until a key replacement; it can never move funds. A lost card is followed by a key replacement. One council card alone is useless: the member prints a fresh pair, which makes the remaining old card worthless too. If both council cards are exposed, the council replaces the key.
+- **Printing:** from the member's profile page, straight from the browser to the printer. The card is never saved as a file or shared, so no digital copy is left behind. Every card also carries one fixed line: if bosadao.it stops working, find the new address at btcdao.tech or ask a council member. Each card also shows the DAO name, the member's pseudonym and short code.
+- **Keeping:** like a house key. Council members keep theirs apart from their SeedQR card, which is the one that can sign for the treasury.
+- **Restoring:** on a new phone, after losing a passkey, or at a new web address, the member scans their card, checks the short code shown, and creates a new passkey, which then protects the same key. Identity, roster and votes carry on, with no re-verification.
+- **Lost or exposed cards:** an ordinary member's card is their identity, so a finder could vote in their name until a key replacement; it can never move funds. A lost card is followed by a key replacement. A council member's card gives a finder one of the 3 council approvals any change needs, and never funds; the council replaces that key at once.
 - **Members who skip the card** recover a lost passkey by key replacement.
 
 ### Moving to a new address
@@ -115,7 +115,7 @@ A new member joins in about two minutes at a meetup and writes nothing down; thr
 
 ### Rules for onboarding
 
-- **Nothing to write down**: the passkey protects the key day to day, and the backup is a printed identity card (two for council members).
+- **Nothing to write down**: the passkey protects the key day to day, and the backup is a printed identity card.
 - **Privacy consent is its own tick box:** the pseudonym and every vote are public and permanent. Real names are never required.
 - **Age:** members must be 18 or over, confirmed by tick box and stated in the charter.
 - **While waiting:** the done screen says voting opens after the 7-day vote and 3 council confirmations; the member sees their admission status at each sign-in.
