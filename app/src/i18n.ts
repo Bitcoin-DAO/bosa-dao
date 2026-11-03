@@ -4,6 +4,8 @@ import { getState } from './app';
 const it = {
   'tagline': 'Tesoreria bitcoin della comunità',
   'banner.trial': 'Prova · rete di prova (testnet4): questi bitcoin non hanno valore',
+  'banner.practice': 'Prova generale.',
+  'banner.practiceText': 'Rete di prova (testnet4), voti brevi. Tutto qui verrà buttato via: alla DAO vera ci si iscrive di nuovo.',
   'banner.devPasskey': 'Sviluppo: le passkey qui sono legate a {host}, non a {domain}.',
   'banner.conflict': 'Attenzione: per questo indirizzo esiste più di una fondazione. Chiedi al Consiglio qual è quella vera prima di fare qualsiasi cosa.',
   'lang.switch': 'Lingua: italiano, passa all\'inglese',
@@ -500,6 +502,8 @@ type Key = keyof typeof it;
 const en: Record<Key, string> = {
   'tagline': 'Community bitcoin treasury',
   'banner.trial': 'Trial · test network (testnet4): these bitcoin have no value',
+  'banner.practice': 'Practice run.',
+  'banner.practiceText': 'Test network (testnet4), short votes. Everything here will be thrown away: you sign up again for the real DAO.',
   'banner.devPasskey': 'Development: passkeys here are tied to {host}, not {domain}.',
   'banner.conflict': 'Careful: there is more than one founding for this address. Ask the council which one is real before doing anything.',
   'lang.switch': 'Language: English, switch to Italian',

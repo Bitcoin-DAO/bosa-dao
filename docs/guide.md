@@ -2,7 +2,7 @@
 
 This guide walks through every step of founding and running a DAO built on btc-dao, using BOSA DAO as the example. It is written for the people who will do the work: the organiser, the council, the maintainer and the founding members. The plain-language introduction is [what-is-a-bitcoin-dao.md](what-is-a-bitcoin-dao.md); the exact rules are in [spec.md](spec.md) and [protocol.md](protocol.md).
 
-**Status.** btc-dao is at the design stage. The software does not exist yet, so this guide describes how the process is designed to work. Where the design did not say what happens, the guide marks a **gap** (G-01, G-02, …): resolved gaps say how, open ones still need a decision. All are listed in the [gap register](#gap-register) at the end.
+**Status.** The software for the testnet stages exists (the phase 1 prototype in `app/`); hardware signing and mainnet follow. Every DAO goes through **three stages**, practice, testnet and mainnet, each a separate DAO with its own tested build (section 8). Where the design did not say what happens, the guide marks a **gap** (G-01, G-02, …): resolved gaps say how, open ones still need a decision. All are listed in the [gap register](#gap-register) at the end.
 
 ## Contents
 
@@ -13,7 +13,7 @@ This guide walks through every step of founding and running a DAO built on btc-d
 5. [Funding the treasury](#5-funding-the-treasury)
 6. [Everyday running](#6-everyday-running)
 7. [Changing the DAO](#7-changing-the-dao)
-8. [From trial to mainnet](#8-from-trial-to-mainnet)
+8. [The three stages: practice, testnet, mainnet](#8-the-three-stages-practice-testnet-mainnet)
 9. [When something goes wrong](#9-when-something-goes-wrong)
 10. [Closing a DAO](#10-closing-a-dao)
 11. [Gap register](#gap-register)
@@ -278,14 +278,35 @@ Used if the domain is lost, seized or not renewed.
 
 Funds stay safe whatever the software does, because council members check every payment on the SeedSigner screen. (Resolved G-16.)
 
-## 8. From trial to mainnet
+## 8. The three stages: practice, testnet, mainnet
 
-The testnet4 trial and the mainnet DAO are two separate DAOs, with different DAO ids, treasuries, addresses and member lists. Nothing from the trial carries over by itself.
+Every DAO is founded three times. Each stage is a separate DAO, with its own copy of the software, config, address, DAO id, treasury and member list. Nothing carries over by itself. The first two stages are disposable.
 
-1. Phase 2 must be passed: hardware signing works on testnet4 and the treasury has been restored and spent in Sparrow without the website.
-2. Council members create **new** mainnet seeds at a new key ceremony. Trial seeds must never hold real funds.
+| | 1. Practice | 2. Testnet | 3. Mainnet |
+| --- | --- | --- | --- |
+| Purpose | Rehearse every step in one sitting | Run the real DAO with test coins | The DAO itself |
+| Config `stage` | `practice` | `testnet` | `mainnet` |
+| Network | testnet4 | testnet4 | mainnet |
+| Voting period | about 10 minutes | the real rules (7 days for BOSA DAO) | the real rules |
+| People | 3 to 5, the council-to-be | all founding members | all founding members again |
+| Treasury keys | test keys on the phones | test keys, then SeedSigner (phase 2) | new seeds from a new key ceremony, SeedSigner |
+| Address (BOSA DAO) | `bitcoin-dao.github.io/bosa-practice` | `bitcoin-dao.github.io/bosa-dao` | `bosadao.it` |
+| Repository | `bosa-practice` | `bosa-dao` | created at mainnet time |
+| Relay | the organisation's relay and public relays | the organisation's relay and public relays | its own, `relay.bosadao.it` |
+| Afterwards | thrown away | thrown away once mainnet runs | kept |
+
+**Practice.** One sitting of about an hour: founder sign-up, setup and approvals, protecting keys and printing cards; a proposal, a vote and its count after ten minutes; a new member joining; a lost key replaced; a card restored on another phone; a payout round with a few thousand test sats, signed, broadcast and confirmed. Anything that goes wrong is fixed before the testnet founding. Afterwards everyone deletes their practice passkey (the phone's password manager lists it as "… (prova generale)"), and the repository is archived. The practice banner on every page says it will be thrown away.
+
+**Testnet.** The real founding meeting, with real rules and real members, on test coins. It runs for at least one full monthly round and the phase 1 and 2 gates: a payout from proposal to receipt run by five testers, hardware signing, and the treasury restored and spent in Sparrow without the website.
+
+**Mainnet.**
+
+1. Phase 2 must be passed on the testnet stage.
+2. Council members create **new** mainnet seeds at a new key ceremony. Test seeds must never hold real funds.
 3. Hold a mainnet founding meeting (section 4) with the mainnet path, the main address `bosadao.it` and the relay at `relay.bosadao.it`.
 4. Fund with real bitcoin up to the cap, and run three monthly rounds without developer help (phase 3's gate).
+
+**Separate, tested builds.** Each stage runs a released version of btc-dao (a version tag), never work in progress. A version moves to the next stage only after it has passed the one before: the practice stage proves a version, the testnet stage may then take it, and mainnet may take only a version the testnet stage has run. Every build runs the protocol tests before it is published (`.github/workflows/pages.yml`), and every release passes the end-to-end runs in `app/e2e` first. A DAO's copy records which version it runs.
 
 Every member of the trial DAO is listed as a founder at the mainnet founding meeting. They sign up afresh, because identities are separate per DAO, and the council verifies them by short code as at any founding meeting, so no one has to be voted in twice. Members print a new identity card for the mainnet DAO; trial cards only work on the trial DAO. (Resolved G-17.)
 

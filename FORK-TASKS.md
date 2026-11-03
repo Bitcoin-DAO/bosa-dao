@@ -21,6 +21,9 @@ This repo counts as released only when every item below is done, the code is fie
 - [ ] BOSA DAO completes three monthly mainnet rounds without developer help
 
 ## Fork kit
+- [ ] Three-stage template: practice, testnet and mainnet configs from one set of answers (practice with short votes)
+- [ ] Release tags; a DAO's copy pins a version, and a version is promoted to the next stage only after passing the previous one
+- [ ] End-to-end runs in CI on every release
 - [ ] Setup wizard produces the config and the recovery sheet
 - [ ] Template repo and one-click deploy to free static hosting
 - [ ] Dashboard listing via `dao.listing`

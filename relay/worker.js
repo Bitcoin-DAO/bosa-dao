@@ -35,6 +35,7 @@ var RateLimiter = _RateLimiter;
 // src/config.ts
 var config_exports = {};
 __export(config_exports, {
+  ALLOWED_DAO_IDS: () => ALLOWED_DAO_IDS,
   AUTH_REQUIRED: () => AUTH_REQUIRED,
   AUTH_TIMEOUT_MS: () => AUTH_TIMEOUT_MS,
   DB_PRUNE_BATCH_SIZE: () => DB_PRUNE_BATCH_SIZE,
@@ -45,7 +46,6 @@ __export(config_exports, {
   PAY_TO_RELAY_ENABLED: () => PAY_TO_RELAY_ENABLED,
   PUBKEY_RATE_LIMIT: () => PUBKEY_RATE_LIMIT,
   RELAY_ACCESS_PRICE_SATS: () => RELAY_ACCESS_PRICE_SATS,
-  REQUIRED_DAO_ID: () => REQUIRED_DAO_ID,
   REQ_RATE_LIMIT: () => REQ_RATE_LIMIT,
   allowedEventKinds: () => allowedEventKinds,
   allowedNip05Domains: () => allowedNip05Domains,
@@ -272,7 +272,7 @@ var blockedEventKinds = /* @__PURE__ */ new Set([]);
 var allowedEventKinds = new Set(
   Array.from({ length: 3586 - 3570 + 1 }, (_, i) => 3570 + i)
 );
-var REQUIRED_DAO_ID = "";
+var ALLOWED_DAO_IDS = [];
 var blockedContent = /* @__PURE__ */ new Set([]);
 var checkValidNip05 = false;
 var blockedNip05Domains = /* @__PURE__ */ new Set([
@@ -337,7 +337,7 @@ function containsBlockedContent(event) {
 __name(containsBlockedContent, "containsBlockedContent");
 function hasDaoTag(event) {
   return event.tags.some(
-    (t) => t[0] === "D" && typeof t[1] === "string" && (REQUIRED_DAO_ID ? t[1] === REQUIRED_DAO_ID : /^[0-9a-f]{64}$/.test(t[1]))
+    (t) => t[0] === "D" && typeof t[1] === "string" && (ALLOWED_DAO_IDS.length ? ALLOWED_DAO_IDS.includes(t[1]) : /^[0-9a-f]{64}$/.test(t[1]))
   );
 }
 __name(hasDaoTag, "hasDaoTag");
