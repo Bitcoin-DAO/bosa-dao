@@ -34,6 +34,7 @@ All 19 screens are in [`design/`](design/README.md).
 | `docs/test-cases.md` | Test cases every client must pass, test vectors, and the protocol gaps they exposed |
 | `docs/decisions.md` | Decisions taken so far and open questions |
 | `design/` | The mock-up screens (Italian) as source and PNG, plus the spec's diagrams |
+| `relay/` | The DAO's own Nostr relay: Nosflare set up to keep only the DAO's events, with deployment steps for Cloudflare |
 | `tools/render-mockups/` | Regenerates the screen PNGs from the source files |
 | `config/bosa-dao.testnet4.example.json` | Example config for the reference instance, with placeholders |
 | `FORK-TASKS.md` | What must be true before this repo counts as released |

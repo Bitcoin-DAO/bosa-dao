@@ -350,7 +350,7 @@ Each DAO runs one relay of its own beside at least two public relays. Its policy
 - no payment for access, and rate limits per key and per connection to keep spam small;
 - keep every accepted event; never delete.
 
-The reference setup is Nosflare on Cloudflare Workers, with pay-to-relay turned off and its allow lists set to the kinds and tag above. For BOSA DAO's trial it runs at a `workers.dev` address under the Bitcoin-DAO organisation's Cloudflare account; on mainnet it moves to `relay.bosadao.it`. Any relay with the same policy can replace it.
+The reference setup is Nosflare on Cloudflare Workers, configured in `relay/`: pay-to-relay and sign-in off, only kinds 3570–3586, a required `D` tag (pinned to the DAO id once it exists), and pruning off. For BOSA DAO's trial it runs at a `workers.dev` address under the Bitcoin-DAO organisation's Cloudflare account; on mainnet it moves to `relay.bosadao.it`. Any relay with the same policy can replace it.
 
 ## 8. Rebuilding state
 
