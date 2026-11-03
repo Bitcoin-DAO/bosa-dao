@@ -25,10 +25,11 @@
     "votingPeriodDays": 7,
     "quorum": "1/3",
     "simpleMajority": ["payout", "statement", "addMember"],
-    "twoThirdsMajority": ["removeMember", "changeRules", "changeCouncil"],
+    "twoThirdsMajority": ["removeMember", "changeRules", "changeCouncil", "close"],
     "payoutRound": "monthly, 1st of the month",
+    "timezone": "Europe/Rome",
     "lapseAfterRounds": 2,
-    "maxFeePerRoundSats": 5000,
+    "maxFeeRateSatVb": 20,
     "treasuryCapSats": 5000000,
     "remoteVerification": { "councilMembersOnCall": 2, "remoteMembersMayJoinCouncil": false, "maxRemoteShare": null },
     "minimumAge": 18

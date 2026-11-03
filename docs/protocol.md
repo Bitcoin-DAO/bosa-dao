@@ -150,7 +150,8 @@ If two different versions with the same number each reach `threshold` endorsemen
   "version": 2,
   "prev": "<sha256 of settings version 1 content>",
   "basis": ["<id of the passed change_rules or change_council proposal>", "<id of the migration's dao.receipt, for a council change>"],
-  "rules": { "votingPeriodDays": 7, "quorum": "1/3", "maxFeePerRoundSats": 5000, "...": "..." },
+  "rules": { "votingPeriodDays": 7, "quorum": "1/3", "timezone": "Europe/Rome", "maxFeeRateSatVb": 20, "treasuryCapSats": 5000000, "...": "..." },
+  "closed": false,
   "council": [{"label": "Council 1", "identityKey": "<hex>", "fingerprint": "<8 hex>", "xpub": "<xpub>"}],
   "threshold": 3,
   "descriptor": "<treasury descriptor with checksum>"
@@ -170,6 +171,8 @@ The genesis config holds `council` (label, identity key, fingerprint, xpub for e
 3. The setup page builds the genesis config, which fixes `dao_id`.
 4. A council member publishes `dao.genesis`; at least `threshold` council members endorse it. There are no `dao.verify` events for founders.
 5. Once a founder's browser sees an endorsed genesis listing its key, it wraps the secret with the passkey (section 1.5), publishes `dao.keywrap` and offers the identity card (section 1.7), which needs `dao8`. Council members print their cards before signing any event other than their genesis endorsement.
+
+A DAO that replaces an earlier one, such as BOSA DAO on mainnet after its signet trial, lists the earlier DAO's members as founders. They sign up afresh, because identity keys are separate per DAO, but no one has to be voted in again.
 
 A founder's key lost before the genesis is published is simply replaced by signing up again. After publication, a lost key goes through `dao.rekey` like any other.
 
@@ -201,6 +204,7 @@ Common fields: `type`, `title` (≤ 80 characters), `summary` (≤ 500 character
 | `remove_member` | `member_key`, `reason` |
 | `change_rules` | `changes`: list of `{path, from, to}` |
 | `change_council` | `out_key`, `in_key`, `in_xpub`, `in_fingerprint`, `threshold`, `new_descriptor` |
+| `close` | `destination`: the address that receives the whole balance |
 
 The human-readable number (`BOSA-0007`) is not in the proposal event. Clients derive it by sorting all valid proposals by `created_at`, then by `id`, and numbering from 1, so every client shows the same numbers without a coordinator. The proposal's tally records the number (section 4.4), and from then on it never changes. A proposal dated before the most recently tallied proposal is rejected, so a backdated proposal can never renumber a closed one; one dated before an open proposal it arrived after is accepted and flagged as backdated.
 
@@ -208,14 +212,14 @@ Valid when:
 - the signer is on the roster in effect at `created_at`;
 - its `created_at` is not earlier than that of the most recently tallied proposal;
 - the content matches the schema for its type;
-- for payouts, every address is valid for the DAO's network, is not a treasury address, and every amount is above the dust limit;
+- for payouts, every address is valid for the DAO's network, is not a treasury address, and every amount is above the dust limit; the same address checks apply to a `close` destination;
 - for `add_member`, every listed `dao.verify` is valid: one in-person verification, or two remote verifications by distinct council members, with the same `candidate_key`.
 
 ### 4.2 `dao.confirm`
 
 Tags: `["e", <proposal id>]`. Content: `{"address": "<address being confirmed>"}`, optionally with `"bip322": "<signature>"` when the recipient's wallet can sign a message with that address.
 
-Valid when the address appears in the proposal's outputs. A payout whose recipient is not the proposer needs a valid `dao.confirm` for each output before it can enter a round. There is no deadline: confirming is the recipient's responsibility, and it may come before, during or after the vote. A passed payout that is still unconfirmed waits, and lapses under the usual rule if it is not made binding within the lapse limit (2 rounds for BOSA DAO). A BIP-322 signature proves control of the address; without it, the confirmation shows only that someone with the confirmation link agreed.
+Valid when the address appears in the proposal's outputs, or is the `destination` of a `close` proposal, which needs a confirmation in the same way. A payout whose recipient is not the proposer needs a valid `dao.confirm` for each output before it can enter a round. There is no deadline: confirming is the recipient's responsibility, and it may come before, during or after the vote. A passed payout that is still unconfirmed waits, and lapses under the usual rule if it is not made binding within the lapse limit (2 rounds for BOSA DAO). A BIP-322 signature proves control of the address; without it, the confirmation shows only that someone with the confirmation link agreed.
 
 ### 4.3 `dao.vote`
 
@@ -242,6 +246,8 @@ Tags: `["e", <proposal id>]`. Content: `{"choice": "yes" | "no" | "abstain"}`.
 ```
 
 Tags: `["e", <proposal id>]`. Signed by a council member after the close. Exclusion reasons: `late`, `not_eligible`, `superseded`. `number` is the proposal's number as derived in section 4.1; a tally whose number differs from that derivation at its `closed_at` is invalid.
+
+Every council member's client publishes the tally automatically the first time it runs after the close, unless a valid tally already exists. Tallies from different council members whose `counted`, `excluded` and `result` are identical are one tally, not a dispute.
 
 Nostr timestamps are chosen by the signer, so a vote could be backdated after the close. The tally settles which votes count: once published and anchored, clients use it instead of recounting. A client that holds a vote dated before `closed_at` that the tally neither counts nor excludes shows a warning on the proposal. A second, conflicting tally makes the proposal **disputed** until `threshold` council members endorse one tally (`dao.endorse`, object `tally`).
 
@@ -290,11 +296,17 @@ Every client that shows the round rebuilds the expected outputs and refuses to o
 - each listed proposal is passed, tallied, confirmed where needed, not yet paid, and not lapsed;
 - any other output is change to the treasury's change branch (`/1/*`) at an unused index;
 - inputs are unspent treasury outputs;
-- `fee_sat` matches the PSBT and is at most `maxFeePerRoundSats` from the rules (requirement S5);
+- `fee_sat` matches the PSBT, and the fee rate is at most `maxFeeRateSatVb` from the rules (requirement S5);
 - for a `change_council` migration round, the single output pays the full balance, minus fee, to the first receive address of `new_descriptor`;
 - no other round is open, unless this round spends at least one of the open round's inputs. A round is open from its publication until it has a receipt. Two rounds that share an input can never both confirm, so a replacement round is safe; once one confirms, the other is void.
 
-**Lapse:** a passed payout lapses if it has not been paid by the second round date (the 1st of the month, for BOSA DAO) after its tally. A lapsed payout can be proposed again.
+**Round dates** are computed in the settings' `timezone` (Europe/Rome for BOSA DAO). If fees are above the fee-rate cap on a round date, no round is built that month and the payouts wait.
+
+**Lapse:** a passed payout lapses if it has not been paid by the second round date after its tally. Round dates on which no round could be built within the fee-rate cap are not counted. A lapsed payout can be proposed again.
+
+**Closing round:** after a `close` proposal passes, is tallied and its destination is confirmed, the next round pays the whole treasury balance, minus the fee, to the destination, with no change output. After its receipt, `threshold` council members endorse a final settings version with `"closed": true`. From its effective time clients accept no new proposals, votes or rounds; the record stays readable.
+
+**Sweeping an old treasury:** after a council change, clients keep watching every earlier descriptor. Anything that arrives there is moved by a sweep round: its inputs are on the earlier descriptor, its single output pays the current treasury's next receive address, and it is signed by council keys that belong to both descriptors. A sweep round is exempt from the one-open-round rule.
 
 PSBT requirements, so hardware signers can verify everything: PSBT version 0; each input carries its `witness_utxo`, `witness_script` and `bip32_derivation` for all five keys; the change output carries its `witness_script` and `bip32_derivation` for all five keys. PSBTs move to and from SeedSigner as animated QR codes in the UR `crypto-psbt` format.
 
@@ -308,6 +320,11 @@ Valid when the signer is a council member and every new partial signature in the
 
 Tags: `["e", <round id>]`. Content: `{"txid": "<hex>", "block_height": 1234567}`. Valid when the chain API confirms that transaction at that height and that it spends the round's inputs to the round's outputs. The round's proposals then show as paid.
 
+### 6.4 Donation address and treasury cap
+
+- The treasury page shows one receive address: the lowest-index unused address on the receive branch (`/0/*`). It keeps showing it until that address receives a payment, then moves to the next. Unused addresses never pile up, so a standard wallet restoring from the recovery sheet, with its default gap limit, always finds every coin.
+- When the balance reaches `treasuryCapSats`, the page shows no donation address. If the balance goes over the cap anyway, every client shows it, and the excess is settled by a members' vote: a `change_rules` proposal raising the cap, or a payout.
+
 ## 7. Record and discovery
 
 ### 7.1 `dao.anchor`
@@ -318,7 +335,7 @@ Tags: `["e", <tally id>]`. Content: `{"digest": "<sha256>", "covers": ["<event i
 
 ### 7.2 `dao.listing`
 
-Content: `{"name": "BOSA DAO", "site": "https://...", "relays": ["wss://..."], "descriptor": "<public descriptor>", "software": "btc-dao 0.1.0"}`. Takes effect with `threshold` endorsements. Dashboards list only endorsed listings.
+Content: `{"name": "BOSA DAO", "site": "https://...", "relays": ["wss://..."], "descriptor": "<public descriptor>", "software": "btc-dao 0.1.0", "build": "<sha256 of the release bundle>"}`. Takes effect with `threshold` endorsements. Dashboards list only endorsed listings, and flag any DAO whose `software` is older than the latest release or whose `build` does not match the signed release. The app shows its own version and build fingerprint on the Rules page, so members can compare.
 
 The `site` of the latest endorsed listing is the DAO's address. Moving the DAO to a new domain is done by publishing a new listing and collecting `threshold` endorsements; no member needs re-verifying. The card-restore screen shows the endorsed address and its endorsements, and clients warn when they are opened at any other address. Members should never scan an identity card on an address the council has not endorsed.
 

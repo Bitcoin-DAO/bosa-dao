@@ -62,7 +62,7 @@ a{color:#1F6B70}a:hover{color:#10292E}
 <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Pagamenti</span><span style="font-family: 'IBM Plex Mono', monospace">40.000</span></div>
 <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Commissione</span><span style="font-family: 'IBM Plex Mono', monospace">{{fee}}</span></div>
 <div style="display: flex; justify-content: space-between; font-size: 14px; color: #4A5D61"><span>Resto alla tesoreria</span><span style="font-family: 'IBM Plex Mono', monospace">{{change}}</span></div>
-<div style="margin-top: 6px; background: #E3F0F0; border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.5; color: #1F4F53"><strong>✓ Sotto il tetto della commissione</strong> (5.000 sats per giro, dalle regole). Sopra il tetto il giro non si può creare.</div>
+<div style="margin-top: 6px; background: #E3F0F0; border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.5; color: #1F4F53"><strong>✓ Sotto il tetto della commissione</strong> (20 sat/vB, dalle regole). Se la rete chiede di più, il giro aspetta il mese successivo e quel mese non conta per la decadenza.</div>
 </section>
 
 <sc-if value="{{notDone}}" hint-placeholder-val="{{ true }}">

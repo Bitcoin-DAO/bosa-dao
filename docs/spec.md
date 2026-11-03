@@ -172,7 +172,7 @@ The treasury is a standard 3-of-5 P2WSH sorted multisig, chosen over Taproot bec
 - **Descriptor:** `wsh(sortedmulti(3, [fp1/48'/0'/0'/2']xpub1/<0;1>/*, … five keys …))` with its checksum. Receive addresses use branch 0, change uses branch 1.
 - **Watch-only:** the website holds the descriptor only. It derives addresses, shows balance and history, and builds PSBTs, but cannot sign.
 - **Device check:** each SeedSigner has the descriptor loaded by QR, so it can confirm that change returns to the treasury.
-- **Address reuse:** each donation request shows a fresh receive address; the public page lists all of them.
+- **Donation address:** the treasury page shows one donation address and keeps showing it until it receives a payment, then moves to the next. Unused addresses never pile up, so a standard wallet restoring from the recovery sheet always finds every coin. Once the balance reaches the trial cap, the page stops showing a donation address; a balance that goes over the cap anyway is put to the members, who vote to raise the cap or pay out the excess.
 
 ### Recovery sheet
 
@@ -201,7 +201,7 @@ BOSA DAO's trial uses one shared SeedSigner, and no single item a council member
 
 Signing: insert your own SD card, boot, scan your SeedQR card, check the fingerprint shown matches your line on the recovery sheet, scan the payout QR, check outputs on screen, show the signed QR.
 
-No passphrase in the trial. Adding one later changes each public key, so it is done as a council-change migration to a new multisig. Members may also use their own SeedSigner, which forks spread over distance will need.
+No passphrase in the trial. Adding one later changes each public key, so it is done as a council-change migration to a new multisig. After any council change the old recovery sheet is archived, not destroyed: continuing members' keys can still spend anything sent to the old treasury, so clients keep watching it and sweep any late arrival into the new one. Only the outgoing member's SeedQR card and steel plate are destroyed, in front of another council member, once the new treasury has been tested in Sparrow. Members may also use their own SeedSigner, which forks spread over distance will need.
 
 ## Governance rules
 
@@ -217,6 +217,7 @@ Members decide by vote; the council makes money decisions binding by signing and
 | Remove member | Removes a person from the roster | Two-thirds majority, quorum met | 3 council endorsements of the new roster |
 | Change rules | Edits governance values (periods, quorum, cadence) | Two-thirds majority, quorum met | 3 council endorsements of the new rules |
 | Change council | Replaces a keyholder or the threshold | Two-thirds majority, quorum met | 3 council signatures on the migration transaction, then 3 endorsements of the new settings |
+| Close the DAO | Ends the DAO: pays the whole balance to the wallet named in the proposal; no proposals are accepted afterwards | Two-thirds majority, quorum met | 3 council signatures on the closing transaction, then 3 endorsements of the final settings |
 
 ### Voting
 
@@ -224,7 +225,7 @@ Members decide by vote; the council makes money decisions binding by signing and
 - **Voting period:** 7 days from publication. Every vote runs its full period; there is no early close, because votes can change until the end.
 - **Quorum:** at least one third of eligible voters, rounded up, cast a vote. Abstain counts toward quorum.
 - **Votes are public** and signed; a member may change their vote until the period ends.
-- **Final tally:** at the close a council member signs the list of votes that counted (S3), with the proposal's number. Clients use it instead of recounting. Two conflicting tallies leave the proposal disputed until 3 council members endorse one.
+- **Final tally:** at the close a council member signs the list of votes that counted (S3), with the proposal's number. Every council member's app publishes it automatically the first time it opens after the close, unless a valid tally is already there; identical tallies from different council members are one tally, not a dispute. Clients use it instead of recounting. Two conflicting tallies leave the proposal disputed until 3 council members endorse one.
 
 ### Lifecycle
 
@@ -247,7 +248,7 @@ Every proposal has a short binding summary plus an optional link to the full tex
 | Field | Filled by | Notes |
 | --- | --- | --- |
 | Proposal ID | Automatic | e.g. BOSA-0007 |
-| Type | Proposer | Payout, Statement, Add member, Remove member, Change rules, Change council |
+| Type | Proposer | Payout, Statement, Add member, Remove member, Change rules, Change council, Close the DAO |
 | Title | Proposer | Up to 80 characters |
 | Summary | Proposer | Up to 500 characters; the binding text members vote on |
 | Full proposal link | Proposer | Optional URL for detail, budgets, images |
@@ -275,6 +276,7 @@ Every proposal has a short binding summary plus an optional link to the full tex
 | Change council | Incoming public key and fingerprint | From their key ceremony |
 | Change council | New threshold | 3 unless changed |
 | Change council | New treasury address | Automatic, from the new multisig |
+| Close the DAO | Destination wallet address | Where the whole balance goes; checked and confirmed like a payout address |
 
 Statements use the common fields only.
 
@@ -293,7 +295,7 @@ All payouts passed since the last round go out together in one monthly transacti
 
 ![Payout round: a payout moves only when the third council device signs](../design/diagrams/payout-round.png)
 
-- **Prepare:** any council member presses Prepare round. The browser builds one PSBT paying every passed proposal, with change back to the treasury and a fee rate from the chain API, and publishes it as a `dao.round` event.
+- **Prepare:** any council member presses Prepare round. The browser builds one PSBT paying every passed proposal, with change back to the treasury and a fee rate from the chain API, at most the fee-rate cap. If fees are above the cap, no round is built that month: payouts wait, and a month skipped for fees does not count toward their lapse, and publishes it as a `dao.round` event.
 - **Verify:** every other browser rebuilds the expected outputs from the passed proposals and refuses to show Sign if they differ by a single sat.
 - **Sign:** members sign in any order, alone or at a meeting in Bosa. Each partial signature is published; on its own it can spend nothing.
 - **Broadcast:** the browser that sees the third valid signature combines them and broadcasts; any other browser can rebroadcast.
@@ -341,7 +343,7 @@ The public pages:
 
 ### Anchoring
 
-When a proposal closes, any member's browser computes a digest of the proposal, its votes, its address confirmations and its signed tally and timestamps it with OpenTimestamps, which batches many hashes into one Bitcoin transaction at no cost to the DAO. The proof is published as a `dao.anchor` event. Anchoring proves the record existed unchanged at that block; it does not keep the record available, so each council member keeps a full export of the DAO's events (one button on the site).
+When a proposal closes, any member's browser computes a digest of the proposal, its votes, its address confirmations and its signed tally and timestamps it with OpenTimestamps, which batches many hashes into one Bitcoin transaction at no cost to the DAO. The proof is published as a `dao.anchor` event. Anchoring proves the record existed unchanged at that block; it does not keep the record available, so each council member exports the DAO's full event history (one button on the site) after every payout round and keeps the last two exports.
 
 ## Fork kit, config and dashboard
 
@@ -361,10 +363,10 @@ A new DAO is a fork of the repo plus its own `dao.config.json`; everything that 
 | `descriptor` | Treasury descriptor with checksum | `wsh(sortedmulti(3, …))#…` |
 | `relays` | DAO relay first, then public relays | wss://relay.bosadao.it plus 2 public relays |
 | `chainApi` | Esplora-compatible endpoints, in order of preference | public explorer, own node later |
-| `rules` | Voting period, quorum, majorities, payout cadence, lapse limit | 7 days; 1/3; simple and 2/3; monthly; 2 rounds |
+| `rules` | Voting period, quorum, majorities, payout cadence and time zone, lapse limit, fee-rate cap, treasury cap | 7 days; 1/3; simple and 2/3; monthly, Europe/Rome; 2 rounds; 20 sat/vB; 5,000,000 sats |
 | `branding` | Logo, colours | — |
 
-The config is the genesis state only. Later roster and rule changes live in endorsed events; the maintainer folds them back into the config at each release.
+The config is the genesis state only. Later roster and rule changes live in endorsed events; the maintainer folds them back into the config at each release. A new software version is announced to members as a statement proposal before it is deployed; releases are signed, the app shows its version and build fingerprint on the Rules page, and the dashboard flags DAOs running outdated versions.
 
 ### Fork kit
 
@@ -407,11 +409,11 @@ The design review found the treasury safe for a capped trial, provided the requi
 | S2 | Strict content security policy, no third-party scripts, pinned and bundled libraries, signed releases with a published hash, and a mirror of the site on a second host | A tampered website could show correct payouts while building different ones | Phase 1 |
 | S3 | At voting close, a council member publishes a signed final tally listing exactly which votes counted; the tally is what gets anchored, and late events are ignored | Nostr timestamps are set by the signer, so votes can be backdated | Phase 1 |
 | S4 | Written state rules plus test cases for edge cases: duplicate votes, a member removed mid-vote, out-of-order events, events from other DAOs | Bugs in rebuilding state from events could allow forged roster or rule changes | Phase 1 |
-| S5 | A fee ceiling in the rules; the app refuses to show Sign above it | A malicious or mistaken round could burn funds in fees | Phase 1 |
+| S5 | A fee-rate ceiling in the rules; the app refuses to show Sign above it, and the round waits instead | A malicious or mistaken round could burn funds in fees | Phase 1 |
 | S6 | Identity keys encrypted by the passkey in the browser; identity cards printed straight from the browser, never saved as files; S2 measures protect them | Stolen identity keys allow false votes, never fund movement | Phase 1 |
 | S7 | The wallet descriptor is loaded on the SeedSigner at every signing and change shows as verified; skipping verification is not allowed. SeedSigner shows change addresses on one line only, so this check is what protects the change | Otherwise a round could quietly redirect the change | Phase 2 (hard gate) |
 | S8 | Main and spare SeedSigner bought from different sources, sealed between rounds; signing times not announced | Hardware tampering, and three SeedQR cards in one room | Phase 3 |
-| S9 | Treasury capped during the trial at an amount the community can afford to lose; the cap is a rule changed only by a two-thirds vote | Limits the cost of any flaw not yet found | Phase 3 |
+| S9 | Treasury capped during the trial at an amount the community can afford to lose; the cap is a rule changed only by a two-thirds vote, and the donation address is hidden once it is reached | Limits the cost of any flaw not yet found | Phase 3 |
 
 Audit timing: this design review now; an independent code review by a bitcoin-experienced developer at the end of phase 2, before mainnet funds; a sats bug bounty once the fork kit is public.
 
@@ -440,7 +442,7 @@ Four phases, each closed by a gate; the repo counts as released only after phase
    - Gate: a signet payout round passes from proposal to confirmed receipt, run by five testers.
 2. **Hardware signing on signet.** SeedSigner QR signing, descriptor loaded on devices, recovery sheet, restore tested in Sparrow.
    - Gate: the treasury is restored and spent in Sparrow without the website.
-3. **BOSA DAO on mainnet.** Key ceremony for the five council members, small treasury, first real monthly rounds, anchoring, public pages.
+3. **BOSA DAO on mainnet.** New mainnet key ceremony for the five council members, a mainnet founding meeting listing every signet member as a founder, small treasury, first real monthly rounds, anchoring, public pages.
    - Gate: three monthly rounds completed without developer help.
 4. **Fork kit.** Setup wizard, template repo, one-click deploy, dashboard listing, FORK-TASKS.md complete.
    - Gate: a second group deploys its own DAO from the kit and runs one round on signet.

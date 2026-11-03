@@ -6,7 +6,7 @@ Cases marked with a gap number tested a rule `protocol.md` did not settle when t
 
 ## Conventions
 
-- **Base state** unless a case says otherwise: BOSA DAO on signet; council A, B, C, D, E (threshold 3); founders F1, F2; rules version 1 (7-day vote, quorum 1/3, majority as in the config, monthly rounds, lapse after 2 rounds, fee cap 5,000 sats); roster version 1 = council + founders.
+- **Base state** unless a case says otherwise: BOSA DAO on signet; council A, B, C, D, E (threshold 3); founders F1, F2; rules version 1 (7-day vote, quorum 1/3, majority as in the config, monthly rounds in Europe/Rome time, lapse after 2 rounds, fee-rate cap 20 sat/vB, treasury cap 5,000,000 sats); roster version 1 = council + founders.
 - `t0` is the time of the event under test; days are counted from it.
 - "Rejected" means the event is kept, shown in the rejected view with the reason, and has no effect on state (section 8). "Ignored" means the client never treats it as part of this DAO.
 - Every result must be the same whatever order the events arrive in, and whichever relays they come from.
@@ -115,6 +115,8 @@ Cases marked with a gap number tested a rule `protocol.md` did not settle when t
 | T-08 | Disputed proposal, then 3 council endorsements of B's tally | B's tally stands (Gap 10) | 3.2, 4.4 |
 | T-10 | Tally whose `number` differs from the derived proposal number | Rejected | 4.4 |
 | T-09 | A publishes the same tally twice | Counts once; not a dispute | 4.4 |
+| T-09c | A's and B's apps both publish tallies with identical `counted`, `excluded` and `result` | One tally; not a dispute | 4.4 |
+| T-09d | No council member has opened the app since the close | No tally yet; the first council app opened publishes it | 4.4 |
 
 ## 8. Verification, key replacement, leaving
 
@@ -161,7 +163,7 @@ Cases marked with a gap number tested a rule `protocol.md` did not settle when t
 | P-R03 | An extra output not in any listed proposal | Sign refused | 6.1 |
 | P-R04 | Change sent to a receive address (`/0/*`) or a used index | Sign refused | 6.1 |
 | P-R05 | Change to an address outside the treasury | Sign refused | 6.1 |
-| P-R06 | Fee of 5,001 sats | Sign refused (S5) | 6.1 |
+| P-R06 | Fee rate of 21 sat/vB | Sign refused (S5) | 6.1 |
 | P-R07 | `fee_sat` differs from the PSBT's real fee | Sign refused | 6.1 |
 | P-R08 | Round includes a rejected, disputed, lapsed, unconfirmed or already-paid proposal | Sign refused | 6.1 |
 | P-R09 | An input that is not a treasury output, or already spent | Sign refused | 6.1 |
@@ -194,6 +196,25 @@ Cases marked with a gap number tested a rule `protocol.md` did not settle when t
 | L-01 | New listing with a new `site`, 3 endorsements | New address in effect; dashboard and restore screen show it | 7.2 |
 | L-02 | New listing with 2 endorsements | Old address stays | 7.2 |
 | L-03 | Client opened at an address that is not the endorsed `site` | Warning shown | 7.2 |
+
+## 14. Treasury housekeeping and closing
+
+| ID | Case | Expected | § |
+| --- | --- | --- | --- |
+| D-01 | Treasury page opened twice with no donation in between | Same donation address both times | 6.4 |
+| D-02 | That address receives a payment | The next unused address is shown | 6.4 |
+| D-03 | Balance reaches the treasury cap | No donation address shown | 6.4 |
+| D-04 | A payment arrives that takes the balance over the cap | Over-cap notice on every client; nothing moves without a vote | 6.4 |
+| D-05 | Wallet restored in Sparrow from the recovery sheet with default settings | Every coin found | 6.4 |
+| Z-01 | Fees on the round date are above the fee-rate cap | No round built; payouts wait; that month does not count toward lapse | 6.1 |
+| Z-02 | Clock at 00:30 on the 1st in Rome (23:30 UTC on the last day of the month) | It is the round date | 6.1 |
+| W-01 | Coins arrive at the old treasury after a council change | Sweep round to the current treasury offered, signed by continuing council keys | 6.1 |
+| W-02 | Sweep round that pays anywhere other than the current treasury | Sign refused | 6.1 |
+| X-01 | Close proposal with a confirmed destination passes with two thirds | Next round pays the whole balance minus fee to the destination, with no change | 4.1, 6.1 |
+| X-02 | Close proposal passes with a simple majority but not two thirds | Rejected | 4.1 |
+| X-03 | Close proposal passed, destination not confirmed | No closing round | 4.2 |
+| X-04 | Final settings with `closed: true` endorsed by 3 | No new proposals, votes or rounds accepted; record still readable | 6.1 |
+| U-01 | Listing whose `build` does not match the signed release | Dashboard flags the DAO | 7.2 |
 
 ## Test vectors
 

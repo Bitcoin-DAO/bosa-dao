@@ -2,7 +2,7 @@
 
 This guide walks through every step of founding and running a DAO built on btc-dao, using BOSA DAO as the example. It is written for the people who will do the work: the organiser, the council, the maintainer and the founding members. The plain-language introduction is [what-is-a-bitcoin-dao.md](what-is-a-bitcoin-dao.md); the exact rules are in [spec.md](spec.md) and [protocol.md](protocol.md).
 
-**Status.** btc-dao is at the design stage. The software does not exist yet, so this guide describes how the process is designed to work. Where the design does not yet say what happens, the guide marks a **gap** (G-01, G-02, …). All gaps are collected in the [gap register](#gap-register) at the end.
+**Status.** btc-dao is at the design stage. The software does not exist yet, so this guide describes how the process is designed to work. Where the design did not say what happens, the guide marks a **gap** (G-01, G-02, …): resolved gaps say how, open ones still need a decision. All are listed in the [gap register](#gap-register) at the end.
 
 ## Contents
 
@@ -57,7 +57,8 @@ Any three council members together can move the treasury. Members cannot move mo
 | Majorities | Simple for payouts, statements and new members; two thirds for removals, rule changes and council changes |
 | Payout rounds | Monthly, on the 1st |
 | Lapse | A passed payout lapses if unpaid by the second round date after its final count |
-| Fee cap | 5,000 sats per round |
+| Fee-rate cap | 20 sat/vB; a month with higher fees waits |
+| Time zone | Europe/Rome, for round dates |
 | Treasury cap (trial) | 5,000,000 sats |
 
 > **Gap G-02.** With a small founding group, the council's own five votes can meet quorum and pass a proposal if no one else votes. This is accepted for now. If the group stays small, consider a rule that a proposal needs at least one yes from a member outside the council.
@@ -158,11 +159,9 @@ If a founder loses their key before step 5, they sign up again before publicatio
 2. **On mainnet**, anyone can donate by scanning the treasury page's receive address. Every incoming payment appears on the public treasury page.
 3. Respect the trial cap (5,000,000 sats for BOSA DAO) while the system proves itself.
 
-> **Gap G-08.** The treasury cap cannot stop incoming bitcoin: anyone can send to a treasury address. Nothing says what happens when donations push the balance over the cap. A proposed rule: the treasury page stops showing a donation address at the cap, and a balance over the cap triggers a members' vote on raising the cap or paying out the excess.
->
-> **Gap G-09.** Standard wallets stop looking for funds after about 20 unused addresses in a row (the gap limit). If the treasury page hands out many fresh donation addresses that go unused, a restore in Sparrow could miss later donations. A proposed fix: show the next unused address and keep showing it until it receives a payment, and print the gap-limit setting on the recovery sheet.
->
-> **Gap G-10.** Many small donations make each payout round larger and more expensive, and the fee cap is a fixed number of sats. When network fees spike, a round can exceed the cap and cannot be signed, so payouts may lapse. Options: express the cap as a fee rate (sats per vbyte) or as a share of the round, allow a council-approved consolidation round when fees are low, or let a round wait instead of lapsing when fees are the only problem.
+4. **One donation address at a time.** The treasury page shows a single address and keeps showing it until it receives a payment, then moves to the next. Unused addresses never pile up, so a standard wallet restoring from the recovery sheet always finds every coin. (Resolved G-09.)
+5. **At the cap,** the page stops showing a donation address. Anyone can still send to an old address, so if the balance goes over the cap anyway, every client shows it and members vote: raise the cap, or pay out the excess. (Resolved G-08.)
+6. **Fees.** The fee cap is a fee rate (20 sat/vB for BOSA DAO), not a fixed sum. If network fees are above it on the round date, no round is built that month: payouts wait, and that month does not count toward their lapse. (Resolved G-10.)
 
 ## 6. Everyday running
 
@@ -195,13 +194,13 @@ Remote members are marked "verified remotely" until someone verifies them in per
 4. Any member's app timestamps the record on Bitcoin with OpenTimestamps.
 5. If two council members publish different counts, the proposal is disputed until three council members approve one.
 
-> **Gap G-11.** No one is assigned to publish the final count, the payment receipt or the timestamp. If nobody does, a proposal stays open indefinitely. A proposed fix: every council member's app publishes the count automatically the first time it is opened after the close (identical counts are harmless), and a monthly rota names who checks that it happened.
+Nobody has to remember to publish the count: every council member's app publishes it automatically the first time it opens after the close, unless a count is already there, and identical counts from two council members are one count, not a dispute. Receipts and timestamps are published the same way by whichever app sees the confirmation or the closed vote first. (Resolved G-11.)
 
 ### 6.4 Payout rounds and signing sessions
 
 Once a month, every approved payment goes out in one transaction.
 
-1. **Prepare.** On the round date, any council member taps Prepare round. The app gathers every passed, counted and confirmed payout not yet paid, adds change back to the treasury and a fee, and publishes the round. Only one round can be open at a time.
+1. **Prepare.** On the round date (the 1st of the month, Europe/Rome time; resolved G-12), any council member taps Prepare round. The app gathers every passed, counted and confirmed payout not yet paid, adds change back to the treasury and a fee, and publishes the round. Only one round can be open at a time.
 2. **Verify.** Every other council member's app rebuilds the payments from the approved proposals and refuses to offer signing if anything differs by a single sat, the fee is above the cap, or the change does not return to the treasury.
 3. **Sign.** Each council member, in any order, alone or together:
     1. inserts their own SD card into the SeedSigner and boots it;
@@ -214,17 +213,13 @@ Once a month, every approved payment goes out in one transaction.
 5. **Receipt.** Once the transaction confirms, a receipt is published and the proposals show as paid.
 6. **Decline.** A council member may refuse to sign, with a public reason. A round that never reaches three signatures can be replaced by a new round that spends at least one of the same coins, so the two can never both pay.
 
-> **Gap G-12.** The round date says "the 1st of the month" but not in which time zone. Add a time zone to the settings (Europe/Rome for BOSA DAO).
->
 > **Gap G-13.** Signing-session logistics are not described: who calls the session, where, how council members who are away sign, and what happens if fewer than three can attend before payouts lapse.
 
 ### 6.5 Keeping the record
 
 1. Every event is on the DAO relay and at least two public relays.
-2. Each council member keeps a full export of the DAO's events (one button on the site).
+2. After every payout round, each council member exports the DAO's full event history (one button on the site) and keeps the last two exports. Public relays may delete old events without notice, so the exports and the DAO relay are the long-term record. (Resolved G-14.)
 3. Every closed vote is timestamped on Bitcoin.
-
-> **Gap G-14.** How often council members export, and where the exports are kept, is not defined. Public relays may delete old events without notice, so the exports and the DAO relay are the long-term record. A proposed rule: each council member exports after every payout round and keeps the last two exports.
 
 ### 6.6 Members leaving, lost phones, lost cards
 
@@ -255,8 +250,8 @@ Used when a council member steps down, becomes unavailable, loses their seed, or
 4. After the final count, the council prepares a migration round that sends the whole balance, minus the fee, to the new treasury. Three members of the **current** council sign it.
 5. Once it confirms, three council members approve the new settings: new council, threshold and descriptor. From then on payouts come from the new treasury.
 6. Print and hand out the new recovery sheet; publish it in the repository.
-
-> **Gap G-15.** What happens to the old keys is not described. A proposed rule: keep the old recovery sheet and seeds until the migration is confirmed and the new sheet is tested in Sparrow; then the outgoing member destroys their SeedQR card and steel plate in front of another council member, and the old recovery sheets are destroyed. Coins sent to the old treasury after the migration need a rule too: watch the old treasury and sweep anything that arrives.
+7. Test the new treasury in Sparrow from the new sheet. Then the outgoing member destroys their SeedQR card and steel plate in front of another council member.
+8. Archive the old recovery sheet; do not destroy it. Continuing council members' keys can still spend the old treasury, and the apps keep watching it: anything sent there later is moved across by a sweep round, signed by three continuing council members. (Resolved G-15.)
 
 ### 7.4 Replacing a member's key
 
@@ -274,7 +269,11 @@ Used if the domain is lost, seized or not renewed.
 
 ### 7.6 Software updates
 
-> **Gap G-16.** Nothing says who decides to deploy a new version of the software, or how members can check what is running. The maintainer can deploy alone. Funds stay safe, because council members check every payment on the SeedSigner screen, but a bad version could misreport votes or proposals. A proposed rule: updates are announced as statement proposals; releases are signed and built reproducibly (S2); the app shows its version and build hash on the Rules page, and the dashboard flags DAOs on outdated versions.
+1. The maintainer announces each new version to members as a statement proposal, with what changes, before deploying it.
+2. Releases are signed and built reproducibly (S2), so anyone can check that the published files match the code.
+3. The app shows its version and build fingerprint on the Rules page; the DAO's listing records them, and the btcdao.tech dashboard flags DAOs running an outdated version or a build that does not match the signed release.
+
+Funds stay safe whatever the software does, because council members check every payment on the SeedSigner screen. (Resolved G-16.)
 
 ## 8. From trial to mainnet
 
@@ -285,7 +284,7 @@ The signet trial and the mainnet DAO are two separate DAOs, with different DAO i
 3. Hold a mainnet founding meeting (section 4) with the mainnet path and the main address `bosadao.it`.
 4. Fund with real bitcoin up to the cap, and run three monthly rounds without developer help (phase 3's gate).
 
-> **Gap G-17.** The move of members from the trial to mainnet is not defined. Because identities are separate per DAO, every signet member would sign up again. A proposed approach: everyone who is a member of the signet DAO is listed as a mainnet founder at the mainnet founding meeting, verified by reading short codes as usual, so no one has to be voted in twice.
+Every member of the signet DAO is listed as a founder at the mainnet founding meeting. They sign up afresh, because identities are separate per DAO, and the council verifies them by short code as at any founding meeting, so no one has to be voted in twice. Members print a new identity card for the mainnet DAO; signet cards only work on the signet DAO. (Resolved G-17.)
 
 ## 9. When something goes wrong
 
@@ -308,30 +307,38 @@ The signet trial and the mainnet DAO are two separate DAOs, with different DAO i
 
 ## 10. Closing a DAO
 
-> **Gap G-19.** There is no procedure for winding up a DAO. It needs a proposal type or a charter clause saying what happens to the remaining funds (another DAO or a named cause; returning them to donors is usually impossible, because donors are not known), what majority it needs, and how the record is archived so it stays checkable after the site goes offline.
+A DAO is closed by a final proposal of type **Close the DAO**, decided by vote. (Resolved G-19.)
+
+1. A member proposes closing. The proposal names the destination wallet that will receive the whole balance: another DAO's treasury, a cause the members choose, or any address the proposal names.
+2. The destination's owner confirms the address, as for a payout to someone else.
+3. It needs two thirds of the votes and quorum.
+4. After the final count, the next round pays the whole balance, minus the fee, to the destination, with no change. Three council members sign.
+5. Once it confirms, three council members approve the final settings, marked closed. From then on no proposals, votes or rounds are accepted; the whole record stays readable.
+6. Each council member keeps a final export, and the repository keeps the last recovery sheet, so the record stays checkable after the site goes offline.
+7. The domain can then be allowed to lapse, and the council members destroy their SeedQR cards and plates.
 
 ## Gap register
 
-| Gap | Area | What is missing | Needed before |
-| --- | --- | --- | --- |
-| G-01 | Preparation | Charter text and the wallet guide | First member joins |
-| G-02 | Governance | Council alone can meet quorum in a small DAO | Accepted; review if membership stays small |
-| G-03 | Preparation | Registrant of `bosadao.it` and how it passes on | Registering the domain |
-| G-04 | Preparation | Static host, relay host, and who pays | Phase 1 |
-| G-05 | Legal | Custody, tax and liability position | Mainnet |
-| G-06 | Legal | Permanent public record versus the right to erasure | Mainnet |
-| G-07 | Treasury | Who keeps the shared SeedSigner and the spare | Founding meeting |
-| G-08 | Treasury | What happens when donations exceed the cap | Mainnet |
-| G-09 | Treasury | Unused donation addresses versus the wallet gap limit | Phase 1 |
-| G-10 | Treasury | Fixed fee cap versus fee spikes and many small coins | Phase 1 |
-| G-11 | Operations | No one assigned to publish counts, receipts and timestamps | Phase 1 |
-| G-12 | Protocol | Time zone of the round date | Phase 1 |
-| G-13 | Operations | Signing-session logistics | Phase 2 |
-| G-14 | Record | How often exports are made and where they are kept | Phase 1 |
-| G-15 | Treasury | Retiring old keys after a council change; coins sent to an old treasury | First council change |
-| G-16 | Software | Who approves updates and how members check the running version | Phase 1 |
-| G-17 | Membership | Carrying members from the signet trial to mainnet | Mainnet founding |
-| G-18 | Council | Death or long incapacity of a council member | Charter |
-| G-19 | Governance | Winding up a DAO | Charter |
+| Gap | Area | What was missing | Needed before | Status |
+| --- | --- | --- | --- | --- |
+| G-01 | Preparation | Charter text and the wallet guide | First member joins | Open |
+| G-02 | Governance | Council alone can meet quorum in a small DAO | Accepted; review if membership stays small | Accepted |
+| G-03 | Preparation | Registrant of `bosadao.it` and how it passes on | Registering the domain | Open |
+| G-04 | Preparation | Static host, relay host, and who pays | Phase 1 | Open |
+| G-05 | Legal | Custody, tax and liability position | Mainnet | Open |
+| G-06 | Legal | Permanent public record versus the right to erasure | Mainnet | Open |
+| G-07 | Treasury | Who keeps the shared SeedSigner and the spare | Founding meeting | Open |
+| G-08 | Treasury | What happens when donations exceed the cap | Mainnet | Resolved |
+| G-09 | Treasury | Unused donation addresses versus the wallet gap limit | Phase 1 | Resolved |
+| G-10 | Treasury | Fixed fee cap versus fee spikes and many small coins | Phase 1 | Resolved |
+| G-11 | Operations | No one assigned to publish counts, receipts and timestamps | Phase 1 | Resolved |
+| G-12 | Protocol | Time zone of the round date | Phase 1 | Resolved |
+| G-13 | Operations | Signing-session logistics | Phase 2 | Open |
+| G-14 | Record | How often exports are made and where they are kept | Phase 1 | Resolved |
+| G-15 | Treasury | Retiring old keys after a council change; coins sent to an old treasury | First council change | Resolved |
+| G-16 | Software | Who approves updates and how members check the running version | Phase 1 | Resolved |
+| G-17 | Membership | Carrying members from the signet trial to mainnet | Mainnet founding | Resolved |
+| G-18 | Council | Death or long incapacity of a council member | Charter | Open |
+| G-19 | Governance | Winding up a DAO | Charter | Resolved |
 
 Still open from the design and listed in [decisions.md](decisions.md): who sits on the BOSA DAO council and who the founders are; whether votes on payouts should be public by name; the event kind numbers; and the phase 1 checks (passkey support on members' phones, printing a card without a saved file, SeedSigner change verification, OpenTimestamps from the browser).

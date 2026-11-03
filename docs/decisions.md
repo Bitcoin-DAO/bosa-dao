@@ -16,6 +16,13 @@
 | Proposal numbers | Derived by every client from publication time, then fixed for good by the signed tally; a proposal dated before the last tallied one is rejected |
 | Settings | Rules, council keys, threshold and descriptor form one versioned record (`dao.settings`), changed only by a passed proposal and 3 endorsements; a council change also needs its migration's receipt. Two conflicting versions of the roster or settings are disputed until the next version picks one |
 | Payout rounds | One open round at a time; a replacement round must spend one of the same coins, so two rounds can never both pay. A passed payout lapses if unpaid by the second round date after its tally |
+| Donations and cap | The treasury page shows one donation address until it is paid (wallets always find every coin on restore); no address is shown at the trial cap, and a balance over the cap goes to a members' vote |
+| Fees | The fee cap is a fee rate (20 sat/vB for BOSA DAO); a month whose fees are above it gets no round, and does not count toward lapse |
+| Housekeeping | Council apps publish final counts, receipts and timestamps automatically; round dates use the settings' time zone (Europe/Rome); council members export the event history after every round and keep the last two |
+| Council change | The old recovery sheet is archived and the old treasury watched, with late arrivals swept across; only the outgoing member's SeedQR card and plate are destroyed, after the new treasury is tested |
+| Software updates | Announced as statement proposals before deployment; releases signed and reproducible; the app and the listing show version and build fingerprint, and the dashboard flags mismatches |
+| Trial to mainnet | Every signet member is listed as a founder of the mainnet DAO, with new keys and cards; no one is voted in twice |
+| Closing a DAO | A "Close the DAO" proposal names the destination wallet; two-thirds majority; a final round pays the whole balance there, then the settings are marked closed |
 | Moving address | If the domain is lost, the council endorses a new address in a `dao.listing`; members scan their cards there and make a new passkey. Same identities, no re-verification. Members find the new address on btcdao.tech (a separate domain) or from the council; every card carries that fallback line. The DAO relay on the lost domain is replaced, and public relays bridge the gap |
 | Signing (BOSA trial) | One shared SeedSigner plus a spare; each council member has their own verified SD card, a 12-word CompactSeedQR card (21x21) and a steel plate at home. No passphrase in the trial |
 | Addresses | Shown as SeedSigner shows them: first 7 and last 7 characters highlighted, middle in full; compared in full |
