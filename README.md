@@ -1,3 +1,11 @@
+# BOSA DAO
+
+**This is BOSA DAO's own copy of [btc-dao](https://github.com/Bitcoin-DAO/btc-dao)**, for the trial on testnet4. The site is at **https://bitcoin-dao.github.io/bosa-dao** and is built from `config/dao.json` by `.github/workflows/pages.yml`. Code changes are made in btc-dao and pulled in here; only `config/dao.json` and this note are BOSA DAO's own.
+
+After the founding meeting, add `"daoId": "<the DAO id shown on the setup page>"` to `config/dao.json`.
+
+---
+
 # btc-dao
 
 A SputnikDAO-style DAO on Bitcoin alone: members propose and vote, a council of keyholders signs payouts from a multisig treasury, and anyone can audit everything.
