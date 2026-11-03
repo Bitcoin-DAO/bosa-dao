@@ -10,7 +10,7 @@ declare const __BUILD_ID__: string;
 export function Rules() {
   const app = useApp();
   const cfg = app.dao?.founded?.config ?? app.site!;
-  const r = cfg.rules;
+  const r = app.dao?.rules ?? cfg.rules;
   const charterOk = sha256Hex(charterText) === r.charterSha256;
   return (
     <>
@@ -19,6 +19,7 @@ export function Rules() {
         <h1>{t('rules.title')}</h1>
         <div class="card">
           <h3>{t('rules.inForce')}</h3>
+          {app.dao?.settings.length ? <span class="small">{t('rules.settingsVersion', { v: app.dao.settings[app.dao.settings.length - 1].content.version })}</span> : null}
           <div class="kv"><span>{t('setup.voting')}</span><span>{t('setup.days', { n: r.votingPeriodDays })}</span></div>
           <div class="kv"><span>{t('setup.quorum')}</span><span>{t('setup.quorumVal', { q: r.quorum })}</span></div>
           <div class="kv"><span>{t('setup.payouts')}</span><span>{t('setup.monthly')}</span></div>

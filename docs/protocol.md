@@ -123,7 +123,7 @@ Valid when it is signed by a key listed in its own `council`, `sha256(JCS(conten
 }
 ```
 
-`object` is one of `genesis`, `roster`, `settings`, `rekey`, `tally`, `listing`. Valid when the signer is on the council in effect when the endorsed object was published, and `hash` matches the endorsed event's content. An object takes effect once it has `threshold` valid endorsements from distinct council members; its effective time is the `created_at` of the endorsement that completed the threshold.
+`object` is one of `genesis`, `roster`, `settings`, `rekey`, `tally`, `listing`. `hash` is `sha256(JCS(content))` of the endorsed event's content (for the genesis, that is the DAO id). Valid when the signer is on the council in effect when the endorsed object was published, and `hash` matches the endorsed event's content. An object takes effect once it has `threshold` valid endorsements from distinct council members; its effective time is the `created_at` of the endorsement that completed the threshold.
 
 ### 3.3 `dao.roster`
 
@@ -139,7 +139,7 @@ Valid when it is signed by a key listed in its own `council`, `sha256(JCS(conten
 }
 ```
 
-Rosters form a chain: each `prev` is the hash of the previous version, and version numbers increase by one. Version 1 is implied by the genesis config: its `council` plus its `founders`, all verified at the founding meeting (section 3.5). A roster version is valid only if every change from the previous version is justified by an item in `basis`: a passed and tallied add, remove or change-council proposal (a council change only once its migration round has a receipt), a valid `dao.leave`, or an endorsed `dao.rekey`. Clients reject a roster that adds or drops anyone without a basis.
+Rosters form a chain: each `prev` is the hash of the previous version, and version numbers increase by one. Version 1 is implied by the genesis config: its `council` plus its `founders`, all verified at the founding meeting (section 3.5). Its content, and so the `prev` of version 2, is exactly `{"version": 1, "members": [...]}`: council members first, in config order, as `{key, name: label, since, verified: "in_person", council: true}`, then founders as `{key, name, since, verified, council: false}`, with `since` the UTC date (YYYY-MM-DD) of the genesis's effective time. The hash of any version is `sha256(JCS(content))`. A roster version is valid only if every change from the previous version is justified by an item in `basis`: a passed and tallied add, remove or change-council proposal (a council change only once its migration round has a receipt), a valid `dao.leave`, or an endorsed `dao.rekey`. Clients reject a roster that adds or drops anyone without a basis.
 
 If two different versions with the same number each reach `threshold` endorsements (possible only if a council member endorses both), both are disputed: no change in either takes effect until the council endorses a next version whose `prev` names one of them. Clients flag every council member who endorsed both. The same rule applies to settings.
 
@@ -158,7 +158,7 @@ If two different versions with the same number each reach `threshold` endorsemen
 }
 ```
 
-Settings hold everything about the DAO that can change by vote: the rules, the council's keys, the threshold and the treasury descriptor. `rules.charterSha256` fixes which charter text is in force: the SHA-256 of the binding (Italian, for BOSA DAO) text as UTF-8. The app shows the charter and checks it against this hash; a charter change is a `change_rules` proposal that changes the hash. Version 1 is taken from the genesis config. Same chain, basis and conflict rules as rosters. A rules change needs a passed and tallied `change_rules` proposal. A council change needs a passed and tallied `change_council` proposal plus the `dao.receipt` of its migration round; the new version names the new council, threshold and descriptor, and from its effective time payout rounds spend from the new descriptor.
+Settings hold everything about the DAO that can change by vote: the rules, the council's keys, the threshold and the treasury descriptor. Version 1 is implied by the genesis: `{"version": 1, "rules", "closed": false, "council", "threshold", "descriptor"}`, taken from the genesis config. `rules.charterSha256` fixes which charter text is in force: the SHA-256 of the binding (Italian, for BOSA DAO) text as UTF-8. The app shows the charter and checks it against this hash; a charter change is a `change_rules` proposal that changes the hash. Version 1 is taken from the genesis config. Same chain, basis and conflict rules as rosters. A rules change needs a passed and tallied `change_rules` proposal. A council change needs a passed and tallied `change_council` proposal plus the `dao.receipt` of its migration round; the new version names the new council, threshold and descriptor, and from its effective time payout rounds spend from the new descriptor.
 
 ### 3.5 Founding
 
@@ -194,15 +194,15 @@ A founder's key lost before the genesis is published is simply replaced by signi
 }
 ```
 
-Common fields: `type`, `title` (≤ 80 characters), `summary` (≤ 500 characters; the binding text), `link` (optional), `lang`. `payload` depends on `type`:
+Common fields: `type`, `title` (≤ 80 characters), `summary` (≤ 500 characters; the binding text), `link` (optional; its `sha256` is optional too, because a browser cannot fetch arbitrary pages to hash them, and the summary is what binds), `lang`. `payload` depends on `type`:
 
 | `type` | `payload` |
 | --- | --- |
-| `payout` | `recipient` (display name), `outputs`: one or more `{address, amount_sat}` |
+| `payout` | `recipient` (display name), `outputs`: 1 to 10 `{address, amount_sat}`, each address once |
 | `statement` | `{}` |
 | `add_member` | `candidate_key`, `name`, `verify`: ids of the `dao.verify` events |
 | `remove_member` | `member_key`, `reason` |
-| `change_rules` | `changes`: list of `{path, from, to}` |
+| `change_rules` | `changes`: list of `{path, from, to}`, where `path` is `rules.<name>` for a top-level rule and `from` must equal the value in force when the change is applied |
 | `change_council` | `out_key`, `in_key`, `in_xpub`, `in_fingerprint`, `threshold`, `new_descriptor` |
 | `close` | `destination`: the address that receives the whole balance |
 
@@ -212,14 +212,14 @@ Valid when:
 - the signer is on the roster in effect at `created_at`;
 - its `created_at` is not earlier than that of the most recently tallied proposal;
 - the content matches the schema for its type;
-- for payouts, every address is valid for the DAO's network, is not a treasury address, and every amount is above the dust limit; the same address checks apply to a `close` destination;
+- for payouts, every address is valid for the DAO's network, is not a treasury address (the first 40 receive and change addresses of every descriptor so far), and every amount is above the dust limit of 546 sats; the same address checks apply to a `close` destination;
 - for `add_member`, every listed `dao.verify` is valid: one in-person verification, or two remote verifications by distinct council members, with the same `candidate_key`.
 
 ### 4.2 `dao.confirm`
 
 Tags: `["e", <proposal id>]`. Content: `{"address": "<address being confirmed>"}`, optionally with `"bip322": "<signature>"` when the recipient's wallet can sign a message with that address.
 
-Valid when the address appears in the proposal's outputs, or is the `destination` of a `close` proposal, which needs a confirmation in the same way. A payout whose recipient is not the proposer needs a valid `dao.confirm` for each output before it can enter a round. There is no deadline: confirming is the recipient's responsibility, and it may come before, during or after the vote. A passed payout that is still unconfirmed waits, and lapses under the usual rule if it is not made binding within the lapse limit (2 rounds for BOSA DAO). A BIP-322 signature proves control of the address; without it, the confirmation shows only that someone with the confirmation link agreed.
+Valid when the address appears in the proposal's outputs, or is the `destination` of a `close` proposal, which needs a confirmation in the same way. Any key may sign it, member or not. Every payout address needs a valid `dao.confirm` before it can enter a round; a proposer who is also the recipient confirms in the same step as proposing. There is no deadline: confirming is the recipient's responsibility, and it may come before, during or after the vote. A passed payout that is still unconfirmed waits, and lapses under the usual rule if it is not made binding within the lapse limit (2 rounds for BOSA DAO). A BIP-322 signature proves control of the address; without it, the confirmation shows only that someone with the confirmation link agreed.
 
 ### 4.3 `dao.vote`
 
@@ -229,6 +229,7 @@ Tags: `["e", <proposal id>]`. Content: `{"choice": "yes" | "no" | "abstain"}`.
 - **Changing a vote:** the latest vote per member counts, by `created_at`, then by `id`.
 - **Close time:** proposal `created_at` + voting period. There is no early close, because votes can change until then.
 - **Quorum:** the number of members casting a counted vote (abstain included) must reach the `quorum` fraction of eligible voters, rounded up. With 18 eligible voters and a quorum of 1/3, that is 6.
+- **Majority:** abstentions count for quorum only. A simple majority is more yes than no. A two-thirds majority, for the types the rules list in `twoThirdsMajority`, is at least one yes and yes ≥ two-thirds of yes plus no.
 
 ### 4.4 `dao.tally` (requirement S3)
 

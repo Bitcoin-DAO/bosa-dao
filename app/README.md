@@ -2,7 +2,7 @@
 
 The DAO's website: one static page that members open on their phones. It holds no keys that can move funds and talks only to the DAO's relays and its chain API. Everything it shows is rebuilt in the browser from signed events (`docs/protocol.md` section 8).
 
-**Stage 1 of the testnet4 prototype** (this version):
+**Stages 1 and 2 of the testnet4 prototype** (this version). Stage 1:
 
 - founder sign-up with a passkey and a random identity key, the short code and the founder QR code;
 - the council's setup page: basics, council (identity plus trial treasury key), founders, publish the genesis, endorsements;
@@ -11,7 +11,18 @@ The DAO's website: one static page that members open on their phones. It holds n
 - the treasury page: balance, donation address (one at a time, none at the cap), movements, from the descriptor and the chain API;
 - members and rules pages, with the charter checked against its hash.
 
-Stage 2 adds proposals, votes, tallies and membership changes; stage 3 adds payout rounds and signing.
+Stage 2:
+
+- proposals of every kind except a council change: payout, statement, new member, removal, rules change, closing the DAO; numbers like BOSA-0007 derived by every client;
+- voting, changing a vote until the close, quorum and simple or two-thirds majority, from the rules in force when the proposal was published;
+- the final count, published automatically by council phones after the close; conflicting counts are shown as disputed;
+- recipient confirmation by link, with or without a DAO key;
+- new members: the candidate's own key and passkey, the sponsor, the council's check (one in person, or two on a video call), the vote, then the next member list;
+- leaving, and replacing a lost key (same person, same votes);
+- the council inbox: publishing and approving new member list and rules versions, approving key replacements, checking candidates;
+- the record of each proposal: every signed event behind it.
+
+Stage 3 adds payout rounds and signing, and council changes.
 
 For the trial, each council member's phone also creates a **test treasury key** (12 words, testnet4 only) and shares its xpub in the founder code. On the setup page any council key can be swapped for one from Sparrow, Nunchuk or SeedSigner (`[fingerprint/48h/1h/0h/2h]tpub…`). The mainnet DAO uses SeedSigner only.
 
@@ -19,7 +30,7 @@ For the trial, each council member's phone also creates a **test treasury key** 
 
 | Path | What it holds |
 | --- | --- |
-| `src/core/` | The protocol, with no browser code: canonical JSON, short codes, events, descriptors and addresses, identity keys and cards, rebuilding state, the treasury from an Esplora API. Unit tests in `core.test.ts` |
+| `src/core/` | The protocol, with no browser code: canonical JSON, short codes, events, descriptors and addresses, identity keys and cards, rebuilding state, the treasury from an Esplora API. Unit tests in `core.test.ts` and `governance.test.ts` |
 | `src/lib/` | Browser parts: passkeys (WebAuthn PRF), relays, QR drawing and scanning, IndexedDB storage |
 | `src/ui/` | The screens, following `design/mockups` |
 | `src/i18n.ts` | Italian and English text |
@@ -41,7 +52,7 @@ npm run build       # type check and build into dist/
 bash e2e/run.sh     # end to end (needs relay/ installed, Playwright with Chromium, ffmpeg)
 ```
 
-The end-to-end run founds a DAO with five council phones and two founders (one remote), checks the identity card's QR, funds the treasury in a mock chain API, signs out and back in with the passkey, restores on a new phone from the card, and reads a card through a fake camera.
+The end-to-end runs: founding with five council phones and two founders (one remote), the identity card's QR, funding the treasury in a mock chain API, signing out and back in, restoring on a new phone from the card, reading a card through a fake camera; then, in a second DAO with a two-minute voting period, a payout confirmed by its recipient, a rules change, a new member from sign-up to member list, a member leaving, and a lost key replaced by the council.
 
 ## Deploy
 

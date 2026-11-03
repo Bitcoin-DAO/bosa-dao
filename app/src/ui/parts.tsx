@@ -56,8 +56,10 @@ export function Footer() {
   return (
     <nav class="footer">
       <a href="#/">{t('nav.home')}</a>
+      <a href="#/proposals">{t('nav.proposals')}</a>
       <a href="#/members">{t('nav.members')}</a>
       <a href="#/rules">{t('nav.rules')}</a>
+      {app.isCouncil && app.secret && <a href="#/council">{t('nav.council')}</a>}
     </nav>
   );
 }

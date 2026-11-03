@@ -9,6 +9,7 @@ import { shortCode, formatShortCode } from '../core/shortcode';
 import { createPasskey, passkeysAvailable } from '../lib/passkey';
 import { store, type PendingFounder } from '../lib/store';
 import { Header, PrintCard, Qr, ShortCode, Steps, errText, go } from './parts';
+import { Candidate } from './Candidate';
 
 export function Founder() {
   const app = useApp();
@@ -16,6 +17,7 @@ export function Founder() {
   const pending = app.pending;
   const [codeDone, setCodeDone] = useState(false);
 
+  if (pending?.role && pending.role !== 'founder') return <Candidate role={pending.role} />;
   // Founded: a founder still holding a pending sign-up protects the key; everyone else sees the result.
   if (app.daoId && !pending) return <FoundedDone />;
   if (!pending) return <SignUp />;

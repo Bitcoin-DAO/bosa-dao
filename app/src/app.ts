@@ -24,6 +24,7 @@ export interface AppState {
   identity?: LocalIdentity;
   secret?: string; // unlocked identity key, this tab only
   me?: Member;
+  isCouncil?: boolean;
   treasury?: TreasuryView;
   treasuryError?: string;
   lang: Lang;
@@ -75,8 +76,26 @@ function derive(events: Event[], extra: Partial<AppState> = {}) {
   const daoId = dao.founded?.daoId;
   const s = { ...state, ...extra };
   const pubkey = s.secret ? pubkeyOf(s.secret) : s.identity?.pubkey;
-  const me = pubkey ? dao.members.find(m => m.key === pubkey) : undefined;
-  setState({ ...extra, events, dao, daoId, me, lastSync: Date.now() });
+  const me = pubkey ? dao.members.find(m => m.person === dao.personOf(pubkey)) : undefined;
+  const isCouncil = !!(me && pubkey && dao.isCouncilAt(pubkey, dao.now));
+  setState({ ...extra, events, dao, daoId, me, isCouncil, lastSync: Date.now() });
+}
+
+const tallied = new Set<string>();
+
+/** Council apps publish the final count of every closed proposal that has none (protocol 4.4). */
+async function autoTally() {
+  const { dao, secret, isCouncil } = state;
+  if (!dao || !secret || !isCouncil) return;
+  for (const p of dao.proposals) {
+    if (p.status !== 'awaiting_tally' || tallied.has(p.event.id)) continue;
+    tallied.add(p.event.id);
+    try {
+      await signAndPublish(KIND.tally, p.recount, [['e', p.event.id]]);
+    } catch {
+      tallied.delete(p.event.id);
+    }
+  }
 }
 
 export async function init() {
@@ -106,6 +125,7 @@ export async function sync() {
   }
   derive(events, { identity, secret, loading: false, pending });
   if (daoId && !state.treasury) void refreshTreasury();
+  void autoTally();
 }
 
 export async function refreshTreasury() {
@@ -137,7 +157,8 @@ export async function publishSigned(event: Event): Promise<PublishResult> {
   return result;
 }
 
-/** After founding: protect the founder's key with the passkey and publish dao.keywrap (protocol 3.5 step 5). */
+/** Once this device's new key is on the roster (founder, new member, or replaced key): protect it with
+ * the passkey and publish dao.keywrap (protocol 3.5 step 5, 1.5). */
 export async function completeFounding(): Promise<void> {
   const { pending, daoId, site } = state;
   if (!pending || !daoId || !site) throw new Error('no-pending');

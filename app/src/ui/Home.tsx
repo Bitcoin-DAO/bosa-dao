@@ -3,17 +3,21 @@ import { refreshTreasury, useApp } from '../app';
 import { fmtDate, fmtSats, t } from '../i18n';
 import { Address, Footer, Header, Qr, go } from './parts';
 import { Join } from './Join';
+import { ProposalCard } from './Proposals';
+import { councilTodo } from './Council';
 
 export function Home() {
   const app = useApp();
   if (!app.daoId) return <Join />;
   const cfg = app.dao!.founded!.config;
+  const current = app.dao!.settings[app.dao!.settings.length - 1].content;
   const tr = app.treasury;
-  const n = cfg.council.length;
-  const m = cfg.threshold;
-  const cap = cfg.rules.treasuryCapSats;
+  const n = current.council.length;
+  const m = current.threshold;
+  const cap = current.rules.treasuryCapSats;
   const atCap = tr ? tr.balance >= cap : false;
   const explorer = (cfg.chainApi[0] ?? '').replace(/\/api\/?$/, '');
+  const open = app.dao!.proposals.filter(p => p.status === 'open').reverse();
   return (
     <>
       <Header />
@@ -53,10 +57,18 @@ export function Home() {
           <Donate address={tr.donationAddress} />
         ))}
 
-        <section class="card">
-          <h2>{t('home.proposals')}</h2>
-          <p class="small">{t('home.proposalsSoon')}</p>
-        </section>
+        {app.isCouncil && app.me && councilTodo(app.dao!, app.me.person) > 0 && (
+          <a class="card tint" style="text-decoration:none;color:var(--teal-ink)" href="#/council">
+            <strong>{t('home.councilTodo', { n: councilTodo(app.dao!, app.me.person) })}</strong>
+          </a>
+        )}
+
+        <div class="row">
+          <h2>{t('home.open')}</h2>
+          <a href="#/proposals" style="font-weight:600;text-decoration:none">{t('home.all')}</a>
+        </div>
+        {open.length === 0 ? <p class="small">{t('home.noOpen')}</p> : open.map(p => <ProposalCard p={p} />)}
+        {app.me && app.secret && <button type="button" class="btn secondary" onClick={() => go('/new')}>{t('props.new')}</button>}
 
         {tr && (
           <section class="card">
