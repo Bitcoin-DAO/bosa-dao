@@ -7,7 +7,7 @@ import { KIND } from '../core/events';
 import { usable } from '../core/config';
 import { feeRate as suggestedFeeRate, txStatus } from '../core/chain';
 import { parseDescriptor } from '../core/descriptor';
-import { buildRound, masterFromSeed, memberSignatures, signWithMnemonicKey, type BuiltRound } from '../core/round';
+import { buildRound, finalizeRound, masterFromSeed, memberSignatures, signWithMnemonicKey, type BuiltRound } from '../core/round';
 import { roundLabel } from '../core/time';
 import { proposalLabel, type Output, type RoundView } from '../core/state';
 import { Address, Footer, Header, errText, go } from './parts';
@@ -172,9 +172,16 @@ export function RoundDetail({ id }: { id: string }) {
     const reason = prompt(t('rd.declineReason'));
     if (reason) void run(() => signAndPublish(KIND.sign, { decline: reason }, [['e', r.event.id]]));
   };
+  const [rawHex, setRawHex] = useState<string>();
   const doBroadcast = () => run(async () => {
-    await broadcastRound(r);
-    setOnChain(true);
+    try {
+      await broadcastRound(r);
+      setOnChain(true);
+    } catch (e) {
+      // Offer the finished transaction so anyone can push it by hand.
+      setRawHex(finalizeRound(r.signEvents.map(x => JSON.parse(x.content).psbt)).hex);
+      throw e;
+    }
   });
   const height = r.receipt ? (JSON.parse(r.receipt.content).block_height as number) : undefined;
 
@@ -242,6 +249,13 @@ export function RoundDetail({ id }: { id: string }) {
             <>
               <p class="ok">{t('rd.ready')}</p>
               {onChain ? <p class="small">{t('rd.broadcasted')}</p> : <button type="button" class="btn primary" disabled={busy} onClick={doBroadcast}>{t('rd.broadcast')}</button>}
+              {rawHex && !onChain && (
+                <div class="stack">
+                  <p class="small">{t('rd.manual')}</p>
+                  <button type="button" class="btn secondary" onClick={() => navigator.clipboard.writeText(rawHex).catch(() => undefined)}>{t('rd.copyTx')}</button>
+                  <a href={`${explorerOf(apis[0] ?? '')}/tx/push`} target="_blank" rel="noopener">{explorerOf(apis[0] ?? '').replace(/^https:\/\//, '')}/tx/push ↗</a>
+                </div>
+              )}
             </>
           )}
           {msg && <p class="warnbox">{msg}</p>}
