@@ -28,6 +28,7 @@ All 19 screens are in [`design/`](design/README.md).
 | `docs/what-is-a-bitcoin-dao.md` | A plain-language introduction: what a Bitcoin DAO is, how it works, what it can be used for |
 | `docs/spec.md` | The full specification v0.2: roles, keys, onboarding (in person and remote), treasury, governance, proposal fields, payout rounds, event formats, threat model, security requirements, build plan |
 | `docs/protocol.md` | The protocol draft v1: every event's exact format, its validity rules, PSBT requirements and how a client rebuilds the DAO's state |
+| `docs/test-cases.md` | Test cases every client must pass, test vectors, and the protocol gaps they exposed |
 | `docs/decisions.md` | Decisions taken so far and open questions |
 | `design/` | The mock-up screens (Italian) as source and PNG, plus the spec's diagrams |
 | `tools/render-mockups/` | Regenerates the screen PNGs from the source files |
