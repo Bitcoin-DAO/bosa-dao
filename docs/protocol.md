@@ -137,7 +137,7 @@ Valid when `sha256(JCS(content)) == dao_id` and it is endorsed (`dao.endorse`, o
 }
 ```
 
-Rosters form a chain: each `prev` is the hash of the previous version, and version numbers increase by one. Version 1 is implied by the genesis config's council plus founding members. A roster version is valid only if every change from the previous version is justified by an item in `basis`: a passed and tallied add or remove proposal, a valid `dao.leave`, or an endorsed `dao.rekey`. Clients reject a roster that adds or drops anyone without a basis.
+Rosters form a chain: each `prev` is the hash of the previous version, and version numbers increase by one. Version 1 is implied by the genesis config: its `council` plus its `founders`, all verified at the founding meeting (section 3.5). A roster version is valid only if every change from the previous version is justified by an item in `basis`: a passed and tallied add or remove proposal, a valid `dao.leave`, or an endorsed `dao.rekey`. Clients reject a roster that adds or drops anyone without a basis.
 
 ### 3.4 `dao.rules`
 
@@ -151,6 +151,20 @@ Rosters form a chain: each `prev` is the hash of the previous version, and versi
 ```
 
 Version 1 is the `rules` object of the genesis config. Same chain and basis rules as rosters.
+
+### 3.5 Founding
+
+The first members cannot join the normal way, because no sponsor, council or vote exists yet. They are listed in the genesis config instead, and the council's endorsement of the genesis stands in for verifying each of them.
+
+The genesis config holds `council` (label, identity key, fingerprint, xpub for each) and `founders`: the founding members who are not on the council, each with `name`, `identityKey` and `verified` (`in_person` or `remote`).
+
+1. The site runs in setup mode at its address before any genesis exists.
+2. Each founder, council members included, creates a passkey and a random identity key in Founder sign-up. The secret stays in that browser only. The setup device scans each founder's key and both read the short code aloud; remote founders do this on a video call.
+3. The setup page builds the genesis config, which fixes `dao_id`.
+4. A council member publishes `dao.genesis`; at least `threshold` council members endorse it. There are no `dao.verify` events for founders.
+5. Once a founder's browser sees an endorsed genesis listing its key, it wraps the secret with the passkey (section 1.5), publishes `dao.keywrap` and offers the identity card (section 1.7), which needs `dao8`. Council members print their cards before signing any event other than their genesis endorsement.
+
+A founder's key lost before the genesis is published is simply replaced by signing up again. After publication, a lost key goes through `dao.rekey` like any other.
 
 ## 4. Governance
 

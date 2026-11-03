@@ -126,6 +126,20 @@ A new member joins in about two minutes at a meetup and writes nothing down; thr
 
 New event types for onboarding: `dao.verify` (council member, verification of a candidate key, marked in person or remote), `dao.rekey` (council member, old and new identity key; valid with 3 council endorsements), `dao.leave` (member, own exit).
 
+### Founding the DAO
+
+The first members join at a founding meeting, because the normal route needs a sponsor, a council member and a vote that do not exist yet. Being listed in the DAO's founding settings, approved by the council, takes their place.
+
+1. **Site in setup mode.** The site goes up at its address (signet.bosadao.it for the trial) before the DAO exists.
+2. **Council ceremonies.** The five council members hold the SD card and key ceremonies, giving the treasury keys, the descriptor and the recovery sheet.
+3. **Founder sign-up.** Each council member and each founding member taps Founder sign-up, creates a passkey and gets a random identity key, kept only in that browser for now. They show their short code; the setup phone scans it and both read it aloud. Remote founders do this on a video call.
+4. **Founding settings.** The setup page builds the genesis config: name, rules, council (identity keys, fingerprints, xpubs), founding members (identity keys and names), descriptor, relays and passkey domain. Its hash is the DAO id.
+5. **Publish and endorse.** A council member publishes the genesis config, and at least 3 council members endorse it. Their endorsement stands in for verifying each founder: they saw every short code read aloud and approved the list.
+6. **Protect and print.** Each founder's app now knows the DAO id, so the passkey protects the key and the founder prints their identity card. Council members print theirs before signing anything.
+7. **Normal joining.** From then on every new member joins by sponsor, verification and vote.
+
+Until step 6 a founder's key lives in one browser only. If it is lost, they sign up again before the genesis config is published; after that, a lost key is an ordinary key replacement.
+
 ### Remote members
 
 DAOs built on btc-dao are expected to be both local and spread across countries, so every in-person step has a video-call equivalent. Remote verification is slightly weaker on one point, one person joining once, so it is marked and can be limited by each DAO's rules.
@@ -345,6 +359,7 @@ A new DAO is a fork of the repo plus its own `dao.config.json`; everything that 
 | `site` | The DAO's web address | https://signet.bosadao.it, then https://bosadao.it |
 | `passkeyDomain` | The domain passkeys are tied to; never changes | bosadao.it |
 | `council` | 5 entries: role label, identity key, key fingerprint, xpub | — |
+| `founders` | Founding members who are not on the council: name and identity key | Listed at the founding meeting |
 | `threshold` | Signatures needed | 3 |
 | `descriptor` | Treasury descriptor with checksum | `wsh(sortedmulti(3, …))#…` |
 | `relays` | DAO relay first, then public relays | wss://relay.bosadao.it plus 2 public relays |
@@ -424,7 +439,7 @@ Later additions, in likely order:
 
 Four phases, each closed by a gate; the repo counts as released only after phase 4, with the licence added last.
 
-1. **Signet prototype.** Passkey sign-in, roster, proposals and votes as events, a 3-of-5 treasury on signet with browser test keys, payout round flow end to end.
+1. **Signet prototype.** Passkey sign-in, a basic founding setup page, roster, proposals and votes as events, a 3-of-5 treasury on signet with browser test keys, payout round flow end to end.
    - Gate: a signet payout round passes from proposal to confirmed receipt, run by five testers.
 2. **Hardware signing on signet.** SeedSigner QR signing, descriptor loaded on devices, recovery sheet, restore tested in Sparrow.
    - Gate: the treasury is restored and spent in Sparrow without the website.
