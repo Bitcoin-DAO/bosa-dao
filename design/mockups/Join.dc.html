@@ -70,12 +70,11 @@ a{color:#1F6B70}a:hover{color:#10292E}
 <sc-if value="{{isKey}}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 16px">
 <h1 style="margin: 0; font-size: 24px; font-weight: 700">Crea la tua chiave</h1>
-<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #2E4448">Una chiave personale per firmare voti e proposte. Nasce dalla passkey del tuo telefono, protetta dalla tua impronta o dal volto. Niente email, niente password, <strong>niente da scrivere</strong>.</p>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #2E4448">Una chiave personale per firmare voti e proposte. La protegge la passkey del tuo telefono, con la tua impronta o il volto. Niente email, niente password, <strong>niente da scrivere</strong>.</p>
 <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #2E4448">Se il telefono sincronizza le passkey, ritrovi la chiave su ogni tuo dispositivo, anche su un telefono nuovo.</p>
 <div style="background: #FFFFFF; border: 1px solid #D5DDDC; border-radius: 12px; padding: 14px 16px; font-size: 14px; line-height: 1.5; color: #2E4448">Questa chiave serve solo per votare. <strong>Non può muovere i fondi</strong> della tesoreria.</div>
 <button type="button" onClick="{{goCode}}" style="min-height: 52px; background: #B54D0A; color: #FFFFFF; border: 0; border-radius: 8px; font-family: inherit; font-size: 16px; font-weight: 600">Crea con impronta o volto</button>
-<a href="#" style="min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500">Il telefono non lo permette? Usa una password</a>
-<span style="font-size: 12px; text-align: center; color: #4A5D61">Solo in quel caso dovrai conservare la password e un file di copia.</span>
+<span style="font-size: 12px; line-height: 1.5; text-align: center; color: #4A5D61">Il telefono non usa le passkey? La chiave resta in questo browser, e la tessera d'identità ti fa entrare dagli altri dispositivi.</span>
 <button type="button" onClick="{{goName}}" style="min-height: 44px; background: transparent; color: #10292E; border: 1px solid #9AAAAD; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600">Indietro</button>
 </div>
 </sc-if>
@@ -128,7 +127,13 @@ Ho almeno 18 anni
 <div style="background: #FFFFFF; border: 1px solid #D5DDDC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
 <strong style="font-size: 15px">E adesso?</strong>
 <span style="font-size: 14px; line-height: 1.5; color: #2E4448">Puoi già guardare tesoreria e proposte. Potrai votare quando sarai nell'elenco dei membri: lo vedrai al prossimo accesso.</span>
-<span style="font-size: 14px; line-height: 1.5; color: #2E4448">Non devi scrivere nulla: la tua chiave segue la tua passkey.</span>
+</div>
+<div style="background: #FFFFFF; border: 2px solid #1F6B70; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<strong style="font-size: 15px">Stampa la tua tessera d'identità</strong>
+<span style="font-size: 14px; line-height: 1.5; color: #2E4448">La tua chiave su carta, come codice QR. Se perdi il telefono, o se un giorno BOSA DAO cambia indirizzo, la scansioni e sei di nuovo dentro: stessa identità, stessi voti.</span>
+<span style="font-size: 14px; line-height: 1.5; color: #2E4448">Niente password e nessun file: va dritta dal browser alla stampante. Tienila come una chiave di casa.</span>
+<button type="button" style="min-height: 48px; background: #1F6B70; color: #FFFFFF; border: 0; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600">Stampa la tessera</button>
+<span style="font-size: 12px; color: #4A5D61">Facoltativa. Puoi stamparla anche dopo, dal tuo profilo.</span>
 </div>
 <div style="background: #FFFFFF; border: 1px solid #D5DDDC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
 <strong style="font-size: 15px">Vuoi poter ricevere pagamenti?</strong>
@@ -143,9 +148,9 @@ Ho almeno 18 anni
 <div style="display: flex; flex-direction: column; gap: 16px">
 <h1 style="margin: 0; font-size: 24px; font-weight: 700">Accedi</h1>
 <button type="button" style="min-height: 52px; background: #B54D0A; color: #FFFFFF; border: 0; border-radius: 8px; font-family: inherit; font-size: 16px; font-weight: 600">Accedi con impronta o volto</button>
-<button type="button" style="min-height: 48px; background: #FFFFFF; color: #10292E; border: 1px solid #9AAAAD; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600">Usa la copia della chiave e la password</button>
+<a href="Restore.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; background: #FFFFFF; color: #10292E; border: 1px solid #9AAAAD; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none">Ho la tessera: scansionala</a>
 <button type="button" style="min-height: 48px; background: #FFFFFF; color: #10292E; border: 1px solid #9AAAAD; border-radius: 8px; font-family: inherit; font-size: 15px; font-weight: 600">Usi già Nostr? Accedi con l'estensione</button>
-<div style="background: #FFFFFF; border: 1px solid #D5DDDC; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; color: #2E4448"><span><strong>Hai perso il telefono e la passkey?</strong> Vieni a un incontro: crei una nuova chiave e un membro del Consiglio verifica che sei tu. I tuoi voti passati restano validi.</span>
+<div style="background: #FFFFFF; border: 1px solid #D5DDDC; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; color: #2E4448"><span><strong>Hai perso il telefono e la passkey?</strong> Se hai la tessera, scansionala qui sopra. Senza tessera, vieni a un incontro: crei una nuova chiave e un membro del Consiglio verifica che sei tu. I tuoi voti passati restano validi.</span>
 <button type="button" onClick="{{goKey}}" style="min-height: 44px; background: #FFFFFF; color: #10292E; border: 1px solid #9AAAAD; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600">Ho perso la chiave: creane una nuova</button></div>
 <button type="button" onClick="{{goStart}}" style="min-height: 44px; background: transparent; color: #10292E; border: 1px solid #9AAAAD; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600">Indietro</button>
 </div>

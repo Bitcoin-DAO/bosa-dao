@@ -18,9 +18,9 @@ To regenerate the PNGs after changing a screen, see `tools/render-mockups/`.
 | --- | --- | --- |
 | ![Proposal detail](screens/ProposalDetail.png) | ![New proposal](screens/NewProposal.png) | ![Confirm](screens/Confirm.png) |
 
-| Propose a new member | Profile and leaving |
-| --- | --- |
-| ![Sponsor a member](screens/SponsorMember.png) | ![Profile](screens/Profile.png) |
+| Propose a new member | Profile, identity card and leaving | Restore from your identity card |
+| --- | --- | --- |
+| ![Sponsor a member](screens/SponsorMember.png) | ![Profile](screens/Profile.png) | ![Restore](screens/Restore.png) |
 
 ## Council
 
@@ -41,6 +41,10 @@ To regenerate the PNGs after changing a screen, see `tools/render-mockups/`.
 **Recovery sheet** (printable A4)
 
 ![Recovery sheet](screens/RecoverySheet.png)
+
+**Identity cards** (printable A4: one card for a member, two for a council member)
+
+![Identity cards](screens/IdentityCards.png)
 
 ## Diagrams
 

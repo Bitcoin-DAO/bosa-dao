@@ -19,7 +19,7 @@ Nothing here is ready for real funds.
 | --- | --- | --- |
 | ![Home](design/screens/Main.png) | ![Proposals](design/screens/Proposals.png) | ![Signing](design/screens/Signing.png) |
 
-All 15 screens are in [`design/`](design/README.md).
+All 17 screens are in [`design/`](design/README.md).
 
 ## Contents
 
