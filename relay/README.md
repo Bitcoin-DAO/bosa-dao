@@ -29,7 +29,7 @@ Tested locally with `wrangler dev`: a kind 3572 event with a `D` tag is saved an
    - Build command: `npm run build`
    - Deploy command: `npx wrangler deploy`
    - Build watch paths, include: `relay/*`, so only relay changes redeploy it
-3. **Deploy**, then open the `workers.dev` address in a browser once: that creates the database tables. The page should say "BOSA DAO relay".
+3. **Deploy**, then open the `workers.dev` address in a browser once: that creates the database tables. The page shows Nosflare's own landing page; the relay's details, read by Nostr clients, carry the BOSA DAO name.
 4. Put the address, as `wss://btc-dao-relay.<account>.workers.dev`, first in `relays` in the DAO config.
 
 ## After founding
