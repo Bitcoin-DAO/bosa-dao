@@ -32,6 +32,12 @@ To regenerate the PNGs after changing a screen, see `tools/render-mockups/`.
 | --- |
 | ![Replace key](screens/ReplaceKey.png) |
 
+## Founding
+
+| Founder sign-up | Prepare the founding (council) |
+| --- | --- |
+| ![Founder sign-up](screens/FounderSignup.png) | ![Setup](screens/Setup.png) |
+
 ## Public reference
 
 | Members | Rules |
