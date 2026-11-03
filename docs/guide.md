@@ -1,0 +1,337 @@
+# Founding and running a Bitcoin DAO: the complete guide
+
+This guide walks through every step of founding and running a DAO built on btc-dao, using BOSA DAO as the example. It is written for the people who will do the work: the organiser, the council, the maintainer and the founding members. The plain-language introduction is [what-is-a-bitcoin-dao.md](what-is-a-bitcoin-dao.md); the exact rules are in [spec.md](spec.md) and [protocol.md](protocol.md).
+
+**Status.** btc-dao is at the design stage. The software does not exist yet, so this guide describes how the process is designed to work. Where the design does not yet say what happens, the guide marks a **gap** (G-01, G-02, …). All gaps are collected in the [gap register](#gap-register) at the end.
+
+## Contents
+
+1. [The people and what they do](#1-the-people-and-what-they-do)
+2. [Before founding](#2-before-founding)
+3. [The council ceremonies](#3-the-council-ceremonies)
+4. [The founding meeting](#4-the-founding-meeting)
+5. [Funding the treasury](#5-funding-the-treasury)
+6. [Everyday running](#6-everyday-running)
+7. [Changing the DAO](#7-changing-the-dao)
+8. [From trial to mainnet](#8-from-trial-to-mainnet)
+9. [When something goes wrong](#9-when-something-goes-wrong)
+10. [Closing a DAO](#10-closing-a-dao)
+11. [Gap register](#gap-register)
+
+## 1. The people and what they do
+
+| Role | How many | Job | Holds |
+| --- | --- | --- | --- |
+| Member | Any number | Proposes and votes | A phone with a passkey; optionally an identity card at home |
+| Council member | 5 in BOSA DAO | Verifies new members, publishes final counts, approves changes to the member list and settings, signs payout rounds | Everything a member holds, plus a SeedQR card, a steel seed plate, their own SeedSigner SD card and a copy of the recovery sheet; an identity card is required |
+| Organiser | 1 at founding | Runs the setup page at the founding meeting | Must be a council member, because publishing the founding settings is a council act |
+| Maintainer | 1 or 2 | Keeps the DAO's copy of the software, hosting and relay running | Access to the repository and hosting; no treasury key |
+| Sponsor | One per new member | Vouches for a new member and opens the add-member proposal | Is an existing member |
+
+Any three council members together can move the treasury. Members cannot move money at all. The council is trusted to follow the members' votes: the app only offers signing for payments members have approved, but three council members acting together outside the app could sign anything. Every such payment is public. This is the trust model of any multisig treasury and is recorded in the spec's threat model.
+
+## 2. Before founding
+
+### 2.1 Agree the purpose and the charter
+
+1. Write down in a few sentences what the money is for and who can join. This becomes the DAO's description and the opening of its charter.
+2. Draft the founding charter: purpose, who may join, how members behave, what the money may and may not be used for, that votes and pseudonyms are public and permanent, and that members must be 18 or over. Members tick that they accept it when they join.
+
+> **Gap G-01.** No charter text or template exists yet, and neither does the "first wallet in 5 minutes" guide that members are pointed to. Both are needed before the first member joins.
+
+### 2.2 Choose the council and the founders
+
+1. Choose five council members. Good keyholders:
+    - are trusted by the group and by each other;
+    - do not share a household or an employer with another council member;
+    - can attend a monthly signing session, or will sign remotely with their own SeedSigner;
+    - are comfortable keeping a seed plate and a SeedQR card safe for years.
+2. List the founding members who are not on the council. They join at the founding meeting without a vote.
+3. Settle the starting rules. BOSA DAO's defaults:
+
+| Setting | BOSA DAO value |
+| --- | --- |
+| Council and threshold | 5, any 3 to sign |
+| Voting period | 7 days, always run in full |
+| Quorum | One third of eligible voters, rounded up |
+| Majorities | Simple for payouts, statements and new members; two thirds for removals, rule changes and council changes |
+| Payout rounds | Monthly, on the 1st |
+| Lapse | A passed payout lapses if unpaid by the second round date after its final count |
+| Fee cap | 5,000 sats per round |
+| Treasury cap (trial) | 5,000,000 sats |
+
+> **Gap G-02.** With a small founding group, the council's own five votes can meet quorum and pass a proposal if no one else votes. This is accepted for now. If the group stays small, consider a rule that a proposal needs at least one yes from a member outside the council.
+
+### 2.3 Choose the addresses and hosting
+
+1. **Domains.** Register the DAO's domain and choose the project domain. BOSA DAO uses `bosadao.it`, with the trial at `signet.bosadao.it` and the relay at `relay.bosadao.it`; the project site and dashboard live at `btcdao.tech`. Pay several years ahead, turn on auto-renew, and give two council members access to the registrar account.
+2. **The domain is permanent.** Passkeys are tied to it. A move is possible (section 7.5), but costs every member a card scan or a key replacement.
+3. **Hosting.** The site is static files on a free static host. The relay runs on a small rented server for the trial, with a box in Bosa possible later. Choose two public relays as well.
+4. **Chain data.** Choose an Esplora-compatible block explorer for balances and broadcasting, and a second one as fallback.
+
+> **Gap G-03.** Who registers `bosadao.it`, and how ownership passes on, is not settled. The DAO has no legal entity, so a person or organisation must be the registrant.
+>
+> **Gap G-04.** The static host and the relay host are not chosen, nor is who pays for them. The relay's cost could be the DAO's first recurring payout proposal.
+
+### 2.4 Get the equipment
+
+| Item | How many | Notes |
+| --- | --- | --- |
+| SeedSigner (Raspberry Pi Zero without radio, 1.3" screen, camera) | 2: one in use, one spare | Bought from different sources and kept sealed between rounds (S8) |
+| microSD card | 1 per council member, plus spares | Each member's own, prepared at the SD card ceremony |
+| Casino dice | At least 1 set | For creating seeds |
+| Steel seed plates and letter punches | 1 per council member | The long-term backup of each seed |
+| SeedQR card templates | 1 per council member | Filled in by hand from the SeedSigner screen |
+| Printer and card stock | 1 | For the recovery sheet and identity cards; laser printing lasts longest |
+| Plastic sleeves | 1 per card | |
+
+Check current prices before buying; nothing here is expensive, and the SeedSigner parts are standard.
+
+### 2.5 Set up the software
+
+1. Copy (fork) the btc-dao repository for the DAO.
+2. Put the site up at its address in **setup mode**: it shows Founder sign-up and the setup page, and nothing else.
+3. Point it at the chosen relays and block explorer.
+4. Check the site works on members' phones: passkey sign-in and printing a card straight from the browser.
+
+For BOSA DAO a developer does this. For later DAOs, the fork kit (phase 4) turns it into a guided setup.
+
+### 2.6 Legal check
+
+> **Gap G-05.** The legal position is not confirmed: whether keyless coordination software counts as custody, how the DAO's funds are treated for tax in Italy and the UK, and what liability council members carry. Take advice before mainnet funds.
+>
+> **Gap G-06.** Votes and pseudonyms are public and permanent, and anchored to Bitcoin so they cannot be changed. Under EU data protection law members have a right to erasure. Pseudonyms reduce the risk but do not remove it. Ask the legal adviser how the charter and the consent wording should handle this.
+
+## 3. The council ceremonies
+
+Each council member goes through two ceremonies before the founding meeting. They can be held on the same day.
+
+### 3.1 SD card ceremony
+
+Each council member prepares their own SD card, so that no one else's card ever runs on the shared device with their seed.
+
+1. Download the official SeedSigner release image.
+2. Verify its signature and checksum, following SeedSigner's own instructions.
+3. Write it to the member's own microSD card.
+4. Label the card with the member's name. It holds no seed and no keys.
+
+### 3.2 Key ceremony
+
+Done by each council member alone, at the shared SeedSigner or their own.
+
+1. Boot the SeedSigner from your own SD card.
+2. Create a new 12-word seed from dice rolls (50 rolls for 12 words). Do not use a seed made anywhere else.
+3. Stamp the 12 words onto your steel plate. This is the backup and stays at home.
+4. Fill in your SeedQR card by hand from the SeedSigner screen (a 21×21 CompactSeedQR). This is what you carry to signings.
+5. Export your public key (xpub) for multisig, at the BIP-48 path for signet (`m/48'/1'/0'/2'`) or mainnet (`m/48'/0'/0'/2'`), as a QR code. Note your 8-character fingerprint.
+6. Power off. The SeedSigner keeps nothing.
+
+Rules that never bend: never type a seed into a phone or computer; never photograph it; never store your SeedQR card with another member's or with the shared device; never sign anything the device screen does not confirm.
+
+### 3.3 Build the wallet and the recovery sheet
+
+1. The organiser scans the five xpubs into the setup page. It builds the 3-of-5 treasury descriptor.
+2. Print the recovery sheet: DAO name, network, threshold, the descriptor as text and QR, the five fingerprints with their holders, and plain restore steps. One printed copy per council member, kept away from their seed, and a copy in the DAO's public repository.
+3. Each council member loads the descriptor onto the SeedSigner and checks their own fingerprint is in it.
+4. **Test before any funds:** restore the wallet in Sparrow from the recovery sheet alone, send signet coins in, and spend them with three seeds. This is phase 2's gate, and it is the only proof that the money can be recovered without btc-dao.
+
+## 4. The founding meeting
+
+The first members join here, because the normal route needs a sponsor, a council member and a vote that do not exist yet. Being listed in the founding settings, approved by the council, takes their place. Remote founders can join by video call.
+
+1. **Open the setup page.** The organiser (a council member) opens it on their phone. Tab 1 holds the basics: name, purpose, address, passkey domain, network and starting rules.
+2. **Founder sign-up.** Each founder, council members included, opens Founder sign-up on their own phone, enters a name and creates a passkey. The app makes a random identity key and keeps it in that browser only for now. Founders must not clear the browser or switch phones until the founding is finished.
+3. **Read the codes aloud.** Each founder shows a QR and a short code. The organiser scans it and both read the short code aloud; it must match. Remote founders send the code by message and read it on the call.
+4. **Council keys.** In tab 2 the organiser links each council member's identity key to their treasury key and fingerprint from the key ceremony.
+5. **Check and publish.** In tab 4 everyone checks the summary together: the DAO, the council and threshold, the founders, the DAO id. The organiser signs and publishes the founding settings. Nothing in them can change later except by proposal.
+6. **Council approval.** At least three council members approve the founding settings on their own phones. Their approval stands in for verifying each founder: they heard every short code read aloud and approved the list. At the third approval BOSA DAO exists.
+7. **Protect and print.** Each founder's app now knows the DAO id. The passkey protects the identity key, and the founder can print their identity card. Council members print theirs before signing anything else.
+8. **Hand-out.** Each council member takes their copy of the recovery sheet. The shared SeedSigner and the spare are sealed and stored.
+
+> **Gap G-07.** Who keeps the shared SeedSigner and the spare between rounds, and where, is not assigned. S8 says sealed, bought from different sources, and signing times not announced, but not who holds them.
+
+If a founder loses their key before step 5, they sign up again before publication. After that, a lost key goes through the normal key replacement.
+
+## 5. Funding the treasury
+
+1. **On signet**, fund the treasury with test coins from a signet faucet. Run at least one full payout round before going near real money.
+2. **On mainnet**, anyone can donate by scanning the treasury page's receive address. Every incoming payment appears on the public treasury page.
+3. Respect the trial cap (5,000,000 sats for BOSA DAO) while the system proves itself.
+
+> **Gap G-08.** The treasury cap cannot stop incoming bitcoin: anyone can send to a treasury address. Nothing says what happens when donations push the balance over the cap. A proposed rule: the treasury page stops showing a donation address at the cap, and a balance over the cap triggers a members' vote on raising the cap or paying out the excess.
+>
+> **Gap G-09.** Standard wallets stop looking for funds after about 20 unused addresses in a row (the gap limit). If the treasury page hands out many fresh donation addresses that go unused, a restore in Sparrow could miss later donations. A proposed fix: show the next unused address and keep showing it until it receives a payment, and print the gap-limit setting on the recovery sheet.
+>
+> **Gap G-10.** Many small donations make each payout round larger and more expensive, and the fee cap is a fixed number of sats. When network fees spike, a round can exceed the cap and cannot be signed, so payouts may lapse. Options: express the cap as a fee rate (sats per vbyte) or as a share of the round, allow a council-approved consolidation round when fees are low, or let a round wait instead of lapsing when fees are the only problem.
+
+## 6. Everyday running
+
+### 6.1 New members
+
+1. The candidate asks a member who knows them to sponsor them.
+2. They meet with the sponsor and one council member, or with two council members on a video call.
+3. The candidate opens the site, taps Become a member, chooses a name and creates a passkey.
+4. They show their code; the sponsor and the council member scan it and all three read the short code aloud.
+5. The council member's phone signs a verification (in person or remote).
+6. The candidate ticks the charter, the public-record consent and the age confirmation, and sends.
+7. The sponsor's phone publishes the add-member proposal, pre-filled and linked to the verification.
+8. Members vote for 7 days. If it passes, a council member signs the final count and three council members approve the new member list. The candidate can then vote.
+9. The candidate is offered the identity card and the wallet guide.
+
+Remote members are marked "verified remotely" until someone verifies them in person, and in the trial they cannot join the council.
+
+### 6.2 Proposals
+
+1. Any member writes a proposal: type, title (up to 80 characters), summary (up to 500; the binding text), an optional link to the full text, and the language.
+2. For a payout, the recipient's address goes in its own box, scanned from the recipient's wallet. Payouts can pay several recipients.
+3. If the recipient is not the proposer, the recipient confirms the address on the proposal page. There is no deadline, but an unconfirmed payout cannot be paid and lapses under the usual rule.
+4. Discussion happens wherever the group already talks. The proposal links to it; the DAO records only the decision.
+
+### 6.3 Voting and the final count
+
+1. Every member on the member list when the proposal was published can vote yes, no or abstain, and change their vote until the end.
+2. The vote always runs 7 days. A member who leaves before the close loses their vote; one whose key is replaced keeps it.
+3. At the close, a council member signs the final count: which votes counted, which were excluded and why, the result, and the proposal's permanent number.
+4. Any member's app timestamps the record on Bitcoin with OpenTimestamps.
+5. If two council members publish different counts, the proposal is disputed until three council members approve one.
+
+> **Gap G-11.** No one is assigned to publish the final count, the payment receipt or the timestamp. If nobody does, a proposal stays open indefinitely. A proposed fix: every council member's app publishes the count automatically the first time it is opened after the close (identical counts are harmless), and a monthly rota names who checks that it happened.
+
+### 6.4 Payout rounds and signing sessions
+
+Once a month, every approved payment goes out in one transaction.
+
+1. **Prepare.** On the round date, any council member taps Prepare round. The app gathers every passed, counted and confirmed payout not yet paid, adds change back to the treasury and a fee, and publishes the round. Only one round can be open at a time.
+2. **Verify.** Every other council member's app rebuilds the payments from the approved proposals and refuses to offer signing if anything differs by a single sat, the fee is above the cap, or the change does not return to the treasury.
+3. **Sign.** Each council member, in any order, alone or together:
+    1. inserts their own SD card into the SeedSigner and boots it;
+    2. scans their SeedQR card and checks the fingerprint matches their line on the recovery sheet;
+    3. loads the descriptor (from the recovery sheet QR) so the device can check the change;
+    4. selects Scan PSBT and scans the round's animated QR from the app;
+    5. checks every address in full and every amount on the device screen against the proposal page;
+    6. signs and shows the signed QR back to the app.
+4. **Send.** The app that collects the third valid signature combines them and broadcasts. Any app can broadcast again; doing so is harmless.
+5. **Receipt.** Once the transaction confirms, a receipt is published and the proposals show as paid.
+6. **Decline.** A council member may refuse to sign, with a public reason. A round that never reaches three signatures can be replaced by a new round that spends at least one of the same coins, so the two can never both pay.
+
+> **Gap G-12.** The round date says "the 1st of the month" but not in which time zone. Add a time zone to the settings (Europe/Rome for BOSA DAO).
+>
+> **Gap G-13.** Signing-session logistics are not described: who calls the session, where, how council members who are away sign, and what happens if fewer than three can attend before payouts lapse.
+
+### 6.5 Keeping the record
+
+1. Every event is on the DAO relay and at least two public relays.
+2. Each council member keeps a full export of the DAO's events (one button on the site).
+3. Every closed vote is timestamped on Bitcoin.
+
+> **Gap G-14.** How often council members export, and where the exports are kept, is not defined. Public relays may delete old events without notice, so the exports and the DAO relay are the long-term record. A proposed rule: each council member exports after every payout round and keeps the last two exports.
+
+### 6.6 Members leaving, lost phones, lost cards
+
+- **Leaving:** from the profile page, at any time, with no vote. Open votes are withdrawn; closed votes and the pseudonym stay in the public record. Council members leave through a council change instead.
+- **New phone:** a synced passkey brings the identity back with nothing to do. Otherwise, scan the identity card.
+- **Lost passkey and no card:** key replacement. A council member re-verifies the member (two council members if remote), and three council members approve. Past votes stay valid.
+- **Lost or exposed card:** print a new one and ask the council for a key replacement. A finder could vote as the member, but never move funds.
+
+## 7. Changing the DAO
+
+### 7.1 Rule changes
+
+1. A member proposes a change-rules proposal naming each setting, its current value and the new one.
+2. It needs two thirds of the votes and quorum.
+3. After the final count, three council members approve the new settings version. Proposals already open keep the rules they started under.
+
+### 7.2 Removing a member
+
+A remove-member proposal needs two thirds. After the final count, three council members approve the new member list.
+
+### 7.3 Changing the council
+
+Used when a council member steps down, becomes unavailable, loses their seed, or the members want a different keyholder or threshold.
+
+1. The incoming council member is already a member. They hold the SD card and key ceremonies (section 3) and print their identity card.
+2. A member proposes a change-council proposal: outgoing and incoming member, the incoming public key and fingerprint, the threshold, and the new treasury descriptor.
+3. It needs two thirds of the votes and quorum.
+4. After the final count, the council prepares a migration round that sends the whole balance, minus the fee, to the new treasury. Three members of the **current** council sign it.
+5. Once it confirms, three council members approve the new settings: new council, threshold and descriptor. From then on payouts come from the new treasury.
+6. Print and hand out the new recovery sheet; publish it in the repository.
+
+> **Gap G-15.** What happens to the old keys is not described. A proposed rule: keep the old recovery sheet and seeds until the migration is confirmed and the new sheet is tested in Sparrow; then the outgoing member destroys their SeedQR card and steel plate in front of another council member, and the old recovery sheets are destroyed. Coins sent to the old treasury after the migration need a rule too: watch the old treasury and sweep anything that arrives.
+
+### 7.4 Replacing a member's key
+
+See section 6.6. In person, one council member verifies and three approve; remotely, two council members verify on the call.
+
+### 7.5 Moving to a new web address
+
+Used if the domain is lost, seized or not renewed.
+
+1. The maintainer puts the site up at the new address. The relay on the old domain goes down with it; the public relays still hold every event.
+2. Three council members approve a new DAO listing naming the new address and relays.
+3. The council announces the new address in person or on a call, and the btcdao.tech dashboard shows it.
+4. Members open the new address, check it is the approved one, scan their identity card and create a new passkey. Same identity, same votes, no re-verification.
+5. Members without a card go through key replacement.
+
+### 7.6 Software updates
+
+> **Gap G-16.** Nothing says who decides to deploy a new version of the software, or how members can check what is running. The maintainer can deploy alone. Funds stay safe, because council members check every payment on the SeedSigner screen, but a bad version could misreport votes or proposals. A proposed rule: updates are announced as statement proposals; releases are signed and built reproducibly (S2); the app shows its version and build hash on the Rules page, and the dashboard flags DAOs on outdated versions.
+
+## 8. From trial to mainnet
+
+The signet trial and the mainnet DAO are two separate DAOs, with different DAO ids, treasuries and member lists. Nothing on signet carries over by itself.
+
+1. Phase 2 must be passed: hardware signing works on signet and the treasury has been restored and spent in Sparrow without the website.
+2. Council members create **new** mainnet seeds at a new key ceremony. Signet seeds must never hold real funds.
+3. Hold a mainnet founding meeting (section 4) with the mainnet path and the main address `bosadao.it`.
+4. Fund with real bitcoin up to the cap, and run three monthly rounds without developer help (phase 3's gate).
+
+> **Gap G-17.** The move of members from the trial to mainnet is not defined. Because identities are separate per DAO, every signet member would sign up again. A proposed approach: everyone who is a member of the signet DAO is listed as a mainnet founder at the mainnet founding meeting, verified by reading short codes as usual, so no one has to be voted in twice.
+
+## 9. When something goes wrong
+
+| Situation | What happens | What to do |
+| --- | --- | --- |
+| A member loses their phone | Nothing is lost | Synced passkey or identity card; otherwise key replacement |
+| A member's card is lost or seen by someone | The finder could vote as them; funds are safe | Reprint and ask for key replacement |
+| A council member loses their SeedQR card | The treasury still needs 3 of 5 | Make a new card from the steel plate; if the card may have been found, change the council |
+| A council member loses their seed entirely | 4 keys remain | Change the council promptly (section 7.3) |
+| Two council members are unavailable | 3 remain: exactly enough | Change the council now. One more loss would freeze the treasury |
+| Three council keys are lost | The treasury cannot be spent by anyone | None. This is why losses must be replaced at once |
+| The SeedSigner breaks | No keys are lost | Use the spare; any SeedSigner works with a member's own SD card and SeedQR card |
+| The site goes down | Funds and record are safe | Re-host the static files at the same address |
+| The DAO relay goes down | Events remain on public relays | Bring it back; council exports fill any gaps |
+| The domain is lost | Passkey sign-in stops | Move to a new address (section 7.5) |
+| A payment looks wrong on the SeedSigner | Nothing has been signed | Do not sign. Decline with the reason and tell the council |
+| Three council members collude | They can move the funds outside the app | It shows publicly as a payment with no round. Members can replace the council, but the money cannot be recovered. The cap limits the loss |
+
+> **Gap G-18.** There is no guidance for a council member's death or long incapacity, beyond changing the council. Their seed should not pass to their heirs: it is the DAO's key, not their property. The charter should say so, and the council should act on any absence of more than one round.
+
+## 10. Closing a DAO
+
+> **Gap G-19.** There is no procedure for winding up a DAO. It needs a proposal type or a charter clause saying what happens to the remaining funds (another DAO or a named cause; returning them to donors is usually impossible, because donors are not known), what majority it needs, and how the record is archived so it stays checkable after the site goes offline.
+
+## Gap register
+
+| Gap | Area | What is missing | Needed before |
+| --- | --- | --- | --- |
+| G-01 | Preparation | Charter text and the wallet guide | First member joins |
+| G-02 | Governance | Council alone can meet quorum in a small DAO | Accepted; review if membership stays small |
+| G-03 | Preparation | Registrant of `bosadao.it` and how it passes on | Registering the domain |
+| G-04 | Preparation | Static host, relay host, and who pays | Phase 1 |
+| G-05 | Legal | Custody, tax and liability position | Mainnet |
+| G-06 | Legal | Permanent public record versus the right to erasure | Mainnet |
+| G-07 | Treasury | Who keeps the shared SeedSigner and the spare | Founding meeting |
+| G-08 | Treasury | What happens when donations exceed the cap | Mainnet |
+| G-09 | Treasury | Unused donation addresses versus the wallet gap limit | Phase 1 |
+| G-10 | Treasury | Fixed fee cap versus fee spikes and many small coins | Phase 1 |
+| G-11 | Operations | No one assigned to publish counts, receipts and timestamps | Phase 1 |
+| G-12 | Protocol | Time zone of the round date | Phase 1 |
+| G-13 | Operations | Signing-session logistics | Phase 2 |
+| G-14 | Record | How often exports are made and where they are kept | Phase 1 |
+| G-15 | Treasury | Retiring old keys after a council change; coins sent to an old treasury | First council change |
+| G-16 | Software | Who approves updates and how members check the running version | Phase 1 |
+| G-17 | Membership | Carrying members from the signet trial to mainnet | Mainnet founding |
+| G-18 | Council | Death or long incapacity of a council member | Charter |
+| G-19 | Governance | Winding up a DAO | Charter |
+
+Still open from the design and listed in [decisions.md](decisions.md): who sits on the BOSA DAO council and who the founders are; whether votes on payouts should be public by name; the event kind numbers; and the phase 1 checks (passkey support on members' phones, printing a card without a saved file, SeedSigner change verification, OpenTimestamps from the browser).
