@@ -103,7 +103,7 @@ This charter says what BOSA DAO is for and how we work together. Every member ac
 
 ## Article 12 · Trial phase
 
-1. BOSA DAO starts on Bitcoin's test network (signet), with no real money.
+1. BOSA DAO starts on Bitcoin's test network (testnet4), with no real money.
 2. It moves to the main network only after recovering the funds without the website has been tested, and with the cap in Article 5.
 3. When the DAO is founded on the main network, every member of the trial becomes a founding member, without a new vote. They create new keys and new cards.
 

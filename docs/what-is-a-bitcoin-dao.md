@@ -1,6 +1,6 @@
 # What is a Bitcoin DAO?
 
-November 2026
+November 2026 · [Italiano](what-is-a-bitcoin-dao.it.md)
 
 A Bitcoin DAO lets a group hold money together and decide together how to spend it, with no single person holding the purse and every decision open for anyone to check.
 

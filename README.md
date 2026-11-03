@@ -11,7 +11,7 @@ A SputnikDAO-style DAO on Bitcoin alone: members propose and vote, a council of 
 
 ## Status
 
-**Design stage.** The specification and a clickable mock-up are complete; no application code yet. The first instance is **BOSA DAO**, a proof of concept for a local bitcoin community in Bosa, Sardinia, starting on signet.
+**Design stage.** The specification and a clickable mock-up are complete; no application code yet. The first instance is **BOSA DAO**, a proof of concept for a local bitcoin community in Bosa, Sardinia, starting with a trial on testnet4.
 
 Nothing here is ready for real funds.
 
@@ -25,7 +25,8 @@ All 19 screens are in [`design/`](design/README.md).
 
 | Path | What it holds |
 | --- | --- |
-| `docs/what-is-a-bitcoin-dao.md` | A plain-language introduction: what a Bitcoin DAO is, how it works, what it can be used for |
+| `docs/what-is-a-bitcoin-dao.md`, `docs/what-is-a-bitcoin-dao.it.md` | A plain-language introduction, in English and Italian: what a Bitcoin DAO is, how it works, what it can be used for |
+| `docs/wallet-guide.it.md`, `docs/wallet-guide.en.md` | "Your first bitcoin wallet in 5 minutes" for members, in Italian and English |
 | `docs/charter.it.md`, `docs/charter.en.md` | BOSA DAO's draft founding charter: Italian (binding) and English translation |
 | `docs/guide.md` | The step-by-step guide to founding and running a DAO, from preparation to closing, with a register of the gaps still open |
 | `docs/spec.md` | The full specification v0.2: roles, keys, onboarding (in person and remote), treasury, governance, proposal fields, payout rounds, event formats, threat model, security requirements, build plan |
@@ -34,13 +35,13 @@ All 19 screens are in [`design/`](design/README.md).
 | `docs/decisions.md` | Decisions taken so far and open questions |
 | `design/` | The mock-up screens (Italian) as source and PNG, plus the spec's diagrams |
 | `tools/render-mockups/` | Regenerates the screen PNGs from the source files |
-| `config/bosa-dao.signet.example.json` | Example config for the reference instance, with placeholders |
+| `config/bosa-dao.testnet4.example.json` | Example config for the reference instance, with placeholders |
 | `FORK-TASKS.md` | What must be true before this repo counts as released |
 
 ## Build plan
 
-1. **Signet prototype**: passkey sign-in, proposals and votes as Nostr events, 3-of-5 signet treasury, payout round end to end.
-2. **Hardware signing on signet**: SeedSigner QR signing, recovery sheet, restore tested in Sparrow.
+1. **Testnet4 prototype**: passkey sign-in, proposals and votes as Nostr events, 3-of-5 testnet4 treasury, payout round end to end; site on GitHub Pages, relay on Nosflare.
+2. **Hardware signing on testnet4**: SeedSigner QR signing, recovery sheet, restore tested in Sparrow.
 3. **BOSA DAO on mainnet**: key ceremony, capped treasury, three monthly rounds without developer help.
 4. **Fork kit**: setup wizard, template repo, one-click deploy, dashboard listing.
 

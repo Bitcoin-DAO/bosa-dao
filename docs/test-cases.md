@@ -6,7 +6,7 @@ Cases marked with a gap number tested a rule `protocol.md` did not settle when t
 
 ## Conventions
 
-- **Base state** unless a case says otherwise: BOSA DAO on signet; council A, B, C, D, E (threshold 3); founders F1, F2; rules version 1 (7-day vote, quorum 1/3, majority as in the config, monthly rounds in Europe/Rome time, lapse after 2 rounds, fee-rate cap 20 sat/vB, treasury cap 5,000,000 sats); roster version 1 = council + founders.
+- **Base state** unless a case says otherwise: BOSA DAO on testnet4; council A, B, C, D, E (threshold 3); founders F1, F2; rules version 1 (7-day vote, quorum 1/3, majority as in the config, monthly rounds in Europe/Rome time, lapse after 2 rounds, fee-rate cap 20 sat/vB, treasury cap 5,000,000 sats); roster version 1 = council + founders.
 - `t0` is the time of the event under test; days are counted from it.
 - "Rejected" means the event is kept, shown in the rejected view with the reason, and has no effect on state (section 8). "Ignored" means the client never treats it as part of this DAO.
 - Every result must be the same whatever order the events arrive in, and whichever relays they come from.
@@ -63,7 +63,7 @@ Cases marked with a gap number tested a rule `protocol.md` did not settle when t
 | P-02 | Proposal by a key not on the roster | Rejected | 4.1 |
 | P-03 | Proposal by F2, dated after F2's `dao.leave` | Rejected | 4.1, 5.3 |
 | P-04 | Title of 81 characters, or summary of 501 | Rejected | 4.1 |
-| P-05 | Payout to a mainnet address in the signet DAO | Rejected: wrong network | 4.1 |
+| P-05 | Payout to a mainnet address in the testnet4 DAO | Rejected: wrong network | 4.1 |
 | P-06 | Payout to one of the treasury's own addresses | Rejected | 4.1 |
 | P-07 | Payout output below the dust limit | Rejected | 4.1 |
 | P-08 | Two proposals with the same `created_at` | Numbered in order of `id` | 4.1 |
@@ -234,7 +234,7 @@ BTCDAO:1:A41C9E07:00000000000000000000000000000000000000000000000000000000000000
 
 82 characters, all in the QR alphanumeric set.
 
-Phase 1 adds full signed fixtures for every case above: a genesis, rosters, proposals, votes, tallies and a signet PSBT round, each as raw Nostr events.
+Phase 1 adds full signed fixtures for every case above: a genesis, rosters, proposals, votes, tallies and a testnet4 PSBT round, each as raw Nostr events.
 
 ## Findings
 

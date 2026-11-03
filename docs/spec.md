@@ -31,7 +31,7 @@ BOSA DAO is the first deployment and the proof of concept: a 3-of-5 council gove
 | Signing devices | One shared SeedSigner plus a spare; each member has their own SD card and SeedQR card | Yes |
 | Voting | One member, one vote | Fixed in v1 |
 | Payout cadence | Monthly payout round | Yes |
-| Network | Signet for the pilot, then mainnet | Yes |
+| Network | Testnet4 for the trial, then mainnet | Yes |
 | Interface languages | Italian and English | Yes |
 
 Why 3-of-5: the treasury survives two lost or unavailable keys, and no two people can move funds alone. The five keyholders should not share a household or employer.
@@ -130,7 +130,7 @@ New event types for onboarding: `dao.verify` (council member, verification of a 
 
 The first members join at a founding meeting, because the normal route needs a sponsor, a council member and a vote that do not exist yet. Being listed in the DAO's founding settings, approved by the council, takes their place.
 
-1. **Site in setup mode.** The site goes up at its address (signet.bosadao.it for the trial) before the DAO exists.
+1. **Site in setup mode.** The site goes up at its address (bitcoin-dao.github.io/bosa-dao on GitHub Pages for the trial) before the DAO exists.
 2. **Council ceremonies.** The five council members hold the SD card and key ceremonies, giving the treasury keys, the descriptor and the recovery sheet.
 3. **Founder sign-up.** Each council member and each founding member taps Founder sign-up, creates a passkey and gets a random identity key, kept only in that browser for now. They show their short code; the setup phone scans it and both read it aloud. Remote founders do this on a video call.
 4. **Founding settings.** The setup page builds the genesis config: name, rules, council (identity keys, fingerprints, xpubs), founding members (identity keys and names), descriptor, relays and passkey domain. Its hash is the DAO id.
@@ -168,7 +168,7 @@ Remote working for the council:
 
 The treasury is a standard 3-of-5 P2WSH sorted multisig, chosen over Taproot because SeedSigner and most hardware signers handle it today and every standard wallet can recover it.
 
-- **Derivation:** each council key exported at the BIP-48 multisig path `m/48'/0'/0'/2'` (testnet/signet: `m/48'/1'/0'/2'`).
+- **Derivation:** each council key exported at the BIP-48 multisig path `m/48'/0'/0'/2'` (testnet4: `m/48'/1'/0'/2'`).
 - **Descriptor:** `wsh(sortedmulti(3, [fp1/48'/0'/0'/2']xpub1/<0;1>/*, … five keys …))` with its checksum. Receive addresses use branch 0, change uses branch 1.
 - **Watch-only:** the website holds the descriptor only. It derives addresses, shows balance and history, and builds PSBTs, but cannot sign.
 - **Device check:** each SeedSigner has the descriptor loaded by QR, so it can confirm that change returns to the treasury.
@@ -303,7 +303,7 @@ All payouts passed since the last round go out together in one monthly transacti
 
 ## Event formats
 
-All DAO activity is signed Nostr events, published to the DAO's own relay plus at least two public relays. Every client rebuilds the DAO's state from these events and the chain; nothing is trusted because a server said so.
+All DAO activity is signed Nostr events, published to the DAO's own relay plus at least two public relays. The DAO relay runs Nosflare on Cloudflare, set to accept only the DAO's event kinds (3570–3586) carrying its D tag, with paid access turned off. Every client rebuilds the DAO's state from these events and the chain; nothing is trusted because a server said so.
 
 Every event carries a `D` tag holding the DAO id and a `v` tag with the protocol version. The DAO id is the SHA-256 of the canonical genesis config, so it never changes. Kinds 3570–3586 are a provisional block of regular events, so relays keep the full history; they must be checked against the Nostr kind registry before v1.
 
@@ -354,14 +354,14 @@ A new DAO is a fork of the repo plus its own `dao.config.json`; everything that 
 | Field | Holds | Example (BOSA DAO) |
 | --- | --- | --- |
 | `name`, `description`, `languages` | Identity and interface languages | BOSA DAO; it, en |
-| `network` | signet or mainnet | signet, then mainnet |
-| `site` | The DAO's web address | https://signet.bosadao.it, then https://bosadao.it |
-| `passkeyDomain` | The domain passkeys are tied to; never changes | bosadao.it |
+| `network` | testnet4 or mainnet | testnet4, then mainnet |
+| `site` | The DAO's web address | https://bitcoin-dao.github.io/bosa-dao, then https://bosadao.it |
+| `passkeyDomain` | The domain passkeys are tied to; never changes within a DAO (trial: bitcoin-dao.github.io) | bosadao.it |
 | `council` | 5 entries: role label, identity key, key fingerprint, xpub | — |
 | `founders` | Founding members who are not on the council: name and identity key | Listed at the founding meeting |
 | `threshold` | Signatures needed | 3 |
 | `descriptor` | Treasury descriptor with checksum | `wsh(sortedmulti(3, …))#…` |
-| `relays` | DAO relay first, then public relays | wss://relay.bosadao.it plus 2 public relays |
+| `relays` | DAO relay first, then public relays | trial: a Nosflare relay on Cloudflare plus 2 public relays; mainnet: wss://relay.bosadao.it plus 2 public relays |
 | `chainApi` | Esplora-compatible endpoints, in order of preference | public explorer, own node later |
 | `rules` | Voting period, quorum, majorities, payout cadence and time zone, lapse limit, fee-rate cap, treasury cap | 7 days; 1/3; simple and 2/3; monthly, Europe/Rome; 2 rounds; 20 sat/vB; 5,000,000 sats |
 | `branding` | Logo, colours | — |
@@ -375,7 +375,7 @@ For a group without a developer:
 1. A setup wizard on the site asks plain questions (name, languages, council size, threshold, rules) and collects each council member's xpub by QR at the key ceremony.
 2. It produces the config file and the recovery sheet.
 3. One-click deploy to free static hosting from a template repo.
-4. A checklist walks the group through signet testing before mainnet.
+4. A checklist walks the group through testing on testnet4 before mainnet.
 
 ### Read-only dashboard
 
@@ -406,7 +406,7 @@ The design review found the treasury safe for a capped trial, provided the requi
 | ID | Requirement | Why | Gate |
 | --- | --- | --- | --- |
 | S1 | Show every address in full, laid out as SeedSigner shows it: first 7 and last 7 characters highlighted, the middle in full between them. Council members compare the whole address on the device, middle included, never just the highlighted ends | Look-alike addresses matching the ends are cheap to generate | Phase 1 |
-| S2 | Strict content security policy, no third-party scripts, pinned and bundled libraries, signed releases with a published hash, and a mirror of the site on a second host | A tampered website could show correct payouts while building different ones | Phase 1 |
+| S2 | Strict content security policy, no third-party scripts, pinned and bundled libraries, signed releases with a published hash, and a mirror of the site on a second host. On GitHub Pages, used for the trial, the policy is set inside the page, because custom headers are not possible | A tampered website could show correct payouts while building different ones | Phase 1 |
 | S3 | At voting close, a council member publishes a signed final tally listing exactly which votes counted; the tally is what gets anchored, and late events are ignored | Nostr timestamps are set by the signer, so votes can be backdated | Phase 1 |
 | S4 | Written state rules plus test cases for edge cases: duplicate votes, a member removed mid-vote, out-of-order events, events from other DAOs | Bugs in rebuilding state from events could allow forged roster or rule changes | Phase 1 |
 | S5 | A fee-rate ceiling in the rules; the app refuses to show Sign above it, and the round waits instead | A malicious or mistaken round could burn funds in fees | Phase 1 |
@@ -438,14 +438,14 @@ Later additions, in likely order:
 
 Four phases, each closed by a gate; the repo counts as released only after phase 4, with the licence added last.
 
-1. **Signet prototype.** Passkey sign-in, a basic founding setup page, roster, proposals and votes as events, a 3-of-5 treasury on signet with browser test keys, payout round flow end to end.
-   - Gate: a signet payout round passes from proposal to confirmed receipt, run by five testers.
-2. **Hardware signing on signet.** SeedSigner QR signing, descriptor loaded on devices, recovery sheet, restore tested in Sparrow.
+1. **Testnet4 prototype.** Passkey sign-in, a basic founding setup page, roster, proposals and votes as events, a 3-of-5 treasury on testnet4 with browser test keys, the site on GitHub Pages and a Nosflare relay, payout round flow end to end.
+   - Gate: a testnet4 payout round passes from proposal to confirmed receipt, run by five testers.
+2. **Hardware signing on testnet4.** SeedSigner QR signing, descriptor loaded on devices, recovery sheet, restore tested in Sparrow.
    - Gate: the treasury is restored and spent in Sparrow without the website.
-3. **BOSA DAO on mainnet.** New mainnet key ceremony for the five council members, a mainnet founding meeting listing every signet member as a founder, small treasury, first real monthly rounds, anchoring, public pages.
+3. **BOSA DAO on mainnet.** New mainnet key ceremony for the five council members, a mainnet founding meeting listing every trial member as a founder, small treasury, first real monthly rounds, anchoring, public pages.
    - Gate: three monthly rounds completed without developer help.
 4. **Fork kit.** Setup wizard, template repo, one-click deploy, dashboard listing, FORK-TASKS.md complete.
-   - Gate: a second group deploys its own DAO from the kit and runs one round on signet.
+   - Gate: a second group deploys its own DAO from the kit and runs one round on testnet4.
 
 Repo: btc-dao. Stack: static site, bundled and pinned libraries (`@scure/btc-signer` or BDK for transactions, `nostr-tools` for events, WebAuthn for passkeys), an Esplora-compatible API for chain data, and the DAO's own relay.
 
@@ -454,8 +454,8 @@ Repo: btc-dao. Stack: static site, bundled and pinned libraries (`@scure/btc-sig
 - [ ] Who are the five BOSA DAO council members, and who are the founding members?
 - [ ] Is a quorum of one third right for a small founding group, or should it start higher?
 - [ ] Should member votes on payouts be public by name, or tallies only?
-- [ ] Where is the DAO relay hosted, and by whom?
-- [ ] Which free static host for the site? Domains decided: btcdao.tech for the project, bosadao.it for BOSA DAO.
+- [ ] Decided: the DAO relay runs Nosflare on Cloudflare, under the Bitcoin-DAO organisation's account.
+- [ ] Which host for the mainnet site? The trial runs on GitHub Pages at bitcoin-dao.github.io/bosa-dao. Domains decided: btcdao.tech for the project, bosadao.it for BOSA DAO on mainnet.
 - [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
 - [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2.
 - [ ] Are kinds 3570–3586 and the D tag free in the Nostr kind registry?

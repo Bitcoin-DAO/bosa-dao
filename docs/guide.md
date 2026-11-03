@@ -67,14 +67,15 @@ A draft charter exists, in [Italian](charter.it.md) (binding) with an [English t
 
 ### 2.3 Choose the addresses and hosting
 
-1. **Domains.** Register the DAO's domain and choose the project domain. BOSA DAO uses `bosadao.it`, with the trial at `signet.bosadao.it` and the relay at `relay.bosadao.it`; the project site and dashboard live at `btcdao.tech`. Pay several years ahead, turn on auto-renew, and give two council members access to the registrar account.
-2. **The domain is permanent.** Passkeys are tied to it. A move is possible (section 7.5), but costs every member a card scan or a key replacement.
-3. **Hosting.** The site is static files on a free static host. The relay runs on a small rented server for the trial, with a box in Bosa possible later. Choose two public relays as well.
-4. **Chain data.** Choose an Esplora-compatible block explorer for balances and broadcasting, and a second one as fallback.
+1. **Trial address.** BOSA DAO's trial runs on GitHub Pages at `bitcoin-dao.github.io/bosa-dao`, published straight from the repository: free, with HTTPS built in. Its passkeys are tied to `bitcoin-dao.github.io`, which is fine because the trial and mainnet DAOs are separate anyway. GitHub Pages cannot send custom security headers, so the content security policy is set inside the page.
+2. **Mainnet domains.** Register the DAO's domain and choose the project domain. BOSA DAO uses `bosadao.it` for mainnet, with the relay at `relay.bosadao.it`; the project site and dashboard live at `btcdao.tech`. Pay several years ahead, turn on auto-renew, and give two council members access to the registrar account.
+3. **The domain is permanent.** Passkeys are tied to it. A move is possible (section 7.5), but costs every member a card scan or a key replacement.
+4. **Relay.** The DAO relay runs Nosflare on Cloudflare Workers, under the Bitcoin-DAO organisation's Cloudflare account, with pay-to-relay off and only the DAO's event kinds and tag allowed (protocol 7.3). For the trial it has a `workers.dev` address; on mainnet it moves to `relay.bosadao.it`. Choose two public relays as well.
+5. **Chain data.** Choose an Esplora-compatible block explorer for balances and broadcasting (mempool.space for testnet4), and a second one as fallback.
 
 > **Gap G-03.** Who registers `bosadao.it`, and how ownership passes on, is not settled. The DAO has no legal entity, so a person or organisation must be the registrant.
 >
-> **Gap G-04.** The static host and the relay host are not chosen, nor is who pays for them. The relay's cost could be the DAO's first recurring payout proposal.
+> **Gap G-04.** Partly resolved: GitHub Pages for the trial site, Nosflare on Cloudflare for the relay. Still open: the mainnet site host, and who pays for Cloudflare beyond its free tier. The relay's cost could be the DAO's first recurring payout proposal.
 
 ### 2.4 Get the equipment
 
@@ -126,7 +127,7 @@ Done by each council member alone, at the shared SeedSigner or their own.
 2. Create a new 12-word seed from dice rolls (50 rolls for 12 words). Do not use a seed made anywhere else.
 3. Stamp the 12 words onto your steel plate. This is the backup and stays at home.
 4. Fill in your SeedQR card by hand from the SeedSigner screen (a 21×21 CompactSeedQR). This is what you carry to signings.
-5. Export your public key (xpub) for multisig, at the BIP-48 path for signet (`m/48'/1'/0'/2'`) or mainnet (`m/48'/0'/0'/2'`), as a QR code. Note your 8-character fingerprint.
+5. Export your public key (xpub) for multisig, at the BIP-48 path for testnet4 (`m/48'/1'/0'/2'`) or mainnet (`m/48'/0'/0'/2'`), as a QR code. Note your 8-character fingerprint.
 6. Power off. The SeedSigner keeps nothing.
 
 Rules that never bend: never type a seed into a phone or computer; never photograph it; never store your SeedQR card with another member's or with the shared device; never sign anything the device screen does not confirm.
@@ -136,7 +137,7 @@ Rules that never bend: never type a seed into a phone or computer; never photogr
 1. The organiser scans the five xpubs into the setup page. It builds the 3-of-5 treasury descriptor.
 2. Print the recovery sheet: DAO name, network, threshold, the descriptor as text and QR, the five fingerprints with their holders, and plain restore steps. One printed copy per council member, kept away from their seed, and a copy in the DAO's public repository.
 3. Each council member loads the descriptor onto the SeedSigner and checks their own fingerprint is in it.
-4. **Test before any funds:** restore the wallet in Sparrow from the recovery sheet alone, send signet coins in, and spend them with three seeds. This is phase 2's gate, and it is the only proof that the money can be recovered without btc-dao.
+4. **Test before any funds:** restore the wallet in Sparrow from the recovery sheet alone, send testnet4 coins in, and spend them with three seeds. This is phase 2's gate, and it is the only proof that the money can be recovered without btc-dao.
 
 ## 4. The founding meeting
 
@@ -157,7 +158,7 @@ If a founder loses their key before step 5, they sign up again before publicatio
 
 ## 5. Funding the treasury
 
-1. **On signet**, fund the treasury with test coins from a signet faucet. Run at least one full payout round before going near real money.
+1. **On testnet4**, fund the treasury with test coins, from a testnet4 faucet or coins the organisers already hold. Test blocks can arrive in bursts or slowly, so expect irregular confirmation times. Run at least one full payout round before going near real money.
 2. **On mainnet**, anyone can donate by scanning the treasury page's receive address. Every incoming payment appears on the public treasury page.
 3. Respect the trial cap (5,000,000 sats for BOSA DAO) while the system proves itself.
 
@@ -279,14 +280,14 @@ Funds stay safe whatever the software does, because council members check every 
 
 ## 8. From trial to mainnet
 
-The signet trial and the mainnet DAO are two separate DAOs, with different DAO ids, treasuries and member lists. Nothing on signet carries over by itself.
+The testnet4 trial and the mainnet DAO are two separate DAOs, with different DAO ids, treasuries, addresses and member lists. Nothing from the trial carries over by itself.
 
-1. Phase 2 must be passed: hardware signing works on signet and the treasury has been restored and spent in Sparrow without the website.
-2. Council members create **new** mainnet seeds at a new key ceremony. Signet seeds must never hold real funds.
-3. Hold a mainnet founding meeting (section 4) with the mainnet path and the main address `bosadao.it`.
+1. Phase 2 must be passed: hardware signing works on testnet4 and the treasury has been restored and spent in Sparrow without the website.
+2. Council members create **new** mainnet seeds at a new key ceremony. Trial seeds must never hold real funds.
+3. Hold a mainnet founding meeting (section 4) with the mainnet path, the main address `bosadao.it` and the relay at `relay.bosadao.it`.
 4. Fund with real bitcoin up to the cap, and run three monthly rounds without developer help (phase 3's gate).
 
-Every member of the signet DAO is listed as a founder at the mainnet founding meeting. They sign up afresh, because identities are separate per DAO, and the council verifies them by short code as at any founding meeting, so no one has to be voted in twice. Members print a new identity card for the mainnet DAO; signet cards only work on the signet DAO. (Resolved G-17.)
+Every member of the trial DAO is listed as a founder at the mainnet founding meeting. They sign up afresh, because identities are separate per DAO, and the council verifies them by short code as at any founding meeting, so no one has to be voted in twice. Members print a new identity card for the mainnet DAO; trial cards only work on the trial DAO. (Resolved G-17.)
 
 ## 9. When something goes wrong
 
@@ -326,7 +327,7 @@ A DAO is closed by a final proposal of type **Close the DAO**, decided by vote. 
 | G-01 | Preparation | Wallet guide; legal review of the drafted charter | First member joins | Partly resolved |
 | G-02 | Governance | Council alone can meet quorum in a small DAO | Accepted; review if membership stays small | Accepted |
 | G-03 | Preparation | Registrant of `bosadao.it` and how it passes on | Registering the domain | Open |
-| G-04 | Preparation | Static host, relay host, and who pays | Phase 1 | Open |
+| G-04 | Preparation | Mainnet site host, and who pays for hosting | Mainnet | Partly resolved |
 | G-05 | Legal | Custody, tax and liability position | Mainnet | Open |
 | G-06 | Legal | Permanent public record versus the right to erasure | Mainnet | Open |
 | G-07 | Treasury | Who keeps the shared SeedSigner and the spare | Founding meeting | Open |
@@ -339,7 +340,7 @@ A DAO is closed by a final proposal of type **Close the DAO**, decided by vote. 
 | G-14 | Record | How often exports are made and where they are kept | Phase 1 | Resolved |
 | G-15 | Treasury | Retiring old keys after a council change; coins sent to an old treasury | First council change | Resolved |
 | G-16 | Software | Who approves updates and how members check the running version | Phase 1 | Resolved |
-| G-17 | Membership | Carrying members from the signet trial to mainnet | Mainnet founding | Resolved |
+| G-17 | Membership | Carrying members from the trial to mainnet | Mainnet founding | Resolved |
 | G-18 | Council | Death or long incapacity of a council member | Charter | Resolved in the draft charter (Article 4.8) |
 | G-19 | Governance | Winding up a DAO | Charter | Resolved |
 

@@ -21,8 +21,12 @@
 | Housekeeping | Council apps publish final counts, receipts and timestamps automatically; round dates use the settings' time zone (Europe/Rome); council members export the event history after every round and keep the last two |
 | Council change | The old recovery sheet is archived and the old treasury watched, with late arrivals swept across; only the outgoing member's SeedQR card and plate are destroyed, after the new treasury is tested |
 | Software updates | Announced as statement proposals before deployment; releases signed and reproducible; the app and the listing show version and build fingerprint, and the dashboard flags mismatches |
-| Trial to mainnet | Every signet member is listed as a founder of the mainnet DAO, with new keys and cards; no one is voted in twice |
+| Trial to mainnet | Every trial member is listed as a founder of the mainnet DAO, with new keys and cards; no one is voted in twice |
 | Closing a DAO | A "Close the DAO" proposal names the destination wallet; two-thirds majority; a final round pays the whole balance there, then the settings are marked closed |
+| Trial network | testnet4, not signet: members can receive test payments on their phones with Nunchuk or Mycelium Testnet, and the organisers already hold test coins. Confirmations are less regular than on signet |
+| Trial site | GitHub Pages at `bitcoin-dao.github.io/bosa-dao`; passkeys tied to `bitcoin-dao.github.io`; content security policy set inside the page |
+| DAO relay | Nosflare on Cloudflare Workers under the Bitcoin-DAO account; only the DAO's kinds (3570–3586) with its `D` tag; no pay-to-relay. Trial on a `workers.dev` address, mainnet at `relay.bosadao.it` |
+| Wallet for members | BlueWallet for mainnet payouts; Nunchuk or Mycelium Testnet for the trial |
 | Moving address | If the domain is lost, the council endorses a new address in a `dao.listing`; members scan their cards there and make a new passkey. Same identities, no re-verification. Members find the new address on btcdao.tech (a separate domain) or from the council; every card carries that fallback line. The DAO relay on the lost domain is replaced, and public relays bridge the gap |
 | Signing (BOSA trial) | One shared SeedSigner plus a spare; each council member has their own verified SD card, a 12-word CompactSeedQR card (21x21) and a steel plate at home. No passphrase in the trial |
 | Addresses | Shown as SeedSigner shows them: first 7 and last 7 characters highlighted, middle in full; compared in full |
@@ -36,7 +40,7 @@
 | DAO id | SHA-256 of the canonical (RFC 8785) genesis config; never changes |
 | Identity per DAO | The passkey-derived key is salted with the DAO id, so one passkey gives unlinkable identities in different DAOs |
 | Domain | Chosen once and kept: passkeys are bound to the domain, so a move means every member replaces their key |
-| Domains | `btcdao.tech` for the project (about, guides, fork kit, read-only dashboard); `bosadao.it` for BOSA DAO, with the trial at `signet.bosadao.it` and the relay at `relay.bosadao.it`. Passkeys are tied to `bosadao.it` so all its subdomains share them |
+| Domains | `btcdao.tech` for the project (about, guides, fork kit, read-only dashboard); `bosadao.it` for BOSA DAO, on mainnet, with the relay at `relay.bosadao.it`. Passkeys are tied to `bosadao.it` so all its subdomains share them |
 | Domain care | Several years paid with auto-renew; two council members can reach the registrar account. A lapsed domain locks members out of signing in |
 | Proposal numbers | Not stored in events; every client derives them by sorting proposals by time, then id |
 
@@ -45,8 +49,7 @@
 - [ ] Who are the five BOSA DAO council members, and who are the founding members?
 - [ ] Is a quorum of one third right for a small founding group?
 - [ ] Should member votes on payouts be public by name, or tallies only?
-- [ ] Where is the DAO relay hosted, and by whom?
-- [ ] Which free static host?
+- [ ] Which host for the mainnet site?
 - [ ] Who registers bosadao.it? The DAO has no legal entity, so a .it registrant must be a person or organisation that qualifies; record who, and plan how it passes on
 - [ ] Can OpenTimestamps calendars be reached from the browser, or is a small helper needed?
 - [ ] Does SeedSigner's current firmware verify change against a loaded P2WSH multisig descriptor? Test before phase 2

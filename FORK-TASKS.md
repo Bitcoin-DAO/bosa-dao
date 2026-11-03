@@ -11,20 +11,20 @@ This repo counts as released only when every item below is done, the code is fie
 - [ ] Signed releases with published hashes; reproducible build (S2)
 
 ## Security gates
-- [ ] S1 to S6 met and tested on signet (phase 1)
+- [ ] S1 to S6 met and tested on testnet4 (phase 1)
 - [ ] S7: change verified against the loaded descriptor on SeedSigner (phase 2, hard gate)
 - [ ] Independent code review before mainnet funds
 - [ ] S8 and S9 in place for the BOSA DAO mainnet trial
 
 ## Field test
-- [ ] BOSA DAO restores and spends its signet treasury in Sparrow without the website
+- [ ] BOSA DAO restores and spends its testnet4 treasury in Sparrow without the website
 - [ ] BOSA DAO completes three monthly mainnet rounds without developer help
 
 ## Fork kit
 - [ ] Setup wizard produces the config and the recovery sheet
 - [ ] Template repo and one-click deploy to free static hosting
 - [ ] Dashboard listing via `dao.listing`
-- [ ] A second group deploys its own DAO from the kit and runs one signet round
+- [ ] A second group deploys its own DAO from the kit and runs one testnet4 round
 
 ## Last
 - [ ] Licence chosen and added

@@ -32,7 +32,7 @@ Events that refer to another event add `["e", <event id>]`. Events about a perso
 | Key | Curve and form | Used for |
 | --- | --- | --- |
 | Identity key | secp256k1, x-only public key (hex) as in Nostr | Signing every event below |
-| Treasury key | BIP-32 xpub at `m/48'/0'/0'/2'` (mainnet) or `m/48'/1'/0'/2'` (signet), with its 4-byte fingerprint | Signing PSBTs only |
+| Treasury key | BIP-32 xpub at `m/48'/0'/0'/2'` (mainnet) or `m/48'/1'/0'/2'` (testnet4), with its 4-byte fingerprint | Signing PSBTs only |
 
 A council member has both. The config maps each council member's identity key to their xpub and fingerprint, so a client can check that a `dao.sign` event's PSBT signature comes from the treasury key of the person who signed the event.
 
@@ -49,7 +49,7 @@ The ciphertext is kept in the browser and published as a `dao.keywrap` event (se
 
 Where the phone has no PRF support, the secret stays in that browser's storage and the member uses their identity card (section 1.7) on other devices. Nostr users may instead sign with their existing key through a NIP-07 browser extension and back it up their own way.
 
-The WebAuthn relying-party id is the config's `passkeyDomain`, set to the DAO's registrable domain (for BOSA DAO, `bosadao.it`), not to the full host. Pages on any subdomain, such as `signet.bosadao.it` for the trial, then use the same passkeys. The signet and mainnet DAOs have different DAO ids, so each member has a separate identity in each.
+The WebAuthn relying-party id is the config's `passkeyDomain`. It is the DAO's registrable domain (for BOSA DAO on mainnet, `bosadao.it`), not the full host, so pages on any of its subdomains share passkeys. On a host whose parent domain is a public suffix, such as GitHub Pages, it is the full host instead: `bitcoin-dao.github.io` for BOSA DAO's trial at `bitcoin-dao.github.io/bosa-dao`. Every DAO published under that GitHub account then shares one passkey domain, which is harmless because the PRF salt includes each DAO's id. The trial and mainnet DAOs have different DAO ids and different passkey domains, so each member has a separate identity in each.
 
 A passkey only works on its own domain. If the DAO moves to a new address (section 7.2), members restore from their identity cards there and register new passkeys. Their identity keys, and so the roster and history, are unchanged.
 
@@ -107,7 +107,7 @@ Compared with the spec v0.1 event table, this adds `dao.settings` (versions of t
 {
   "kind": 3570,
   "tags": [["D", "<dao_id>"], ["v", "1"]],
-  "content": "<the genesis config, as in config/bosa-dao.signet.example.json>"
+  "content": "<the genesis config, as in config/bosa-dao.testnet4.example.json>"
 }
 ```
 
@@ -172,7 +172,7 @@ The genesis config holds `council` (label, identity key, fingerprint, xpub for e
 4. A council member publishes `dao.genesis`; at least `threshold` council members endorse it. There are no `dao.verify` events for founders.
 5. Once a founder's browser sees an endorsed genesis listing its key, it wraps the secret with the passkey (section 1.5), publishes `dao.keywrap` and offers the identity card (section 1.7), which needs `dao8`. Council members print their cards before signing any event other than their genesis endorsement.
 
-A DAO that replaces an earlier one, such as BOSA DAO on mainnet after its signet trial, lists the earlier DAO's members as founders. They sign up afresh, because identity keys are separate per DAO, but no one has to be voted in again.
+A DAO that replaces an earlier one, such as BOSA DAO on mainnet after its trial on testnet4, lists the earlier DAO's members as founders. They sign up afresh, because identity keys are separate per DAO, but no one has to be voted in again.
 
 A founder's key lost before the genesis is published is simply replaced by signing up again. After publication, a lost key goes through `dao.rekey` like any other.
 
@@ -340,6 +340,17 @@ Content: `{"name": "BOSA DAO", "site": "https://...", "relays": ["wss://..."], "
 The `site` of the latest endorsed listing is the DAO's address. Moving the DAO to a new domain is done by publishing a new listing and collecting `threshold` endorsements; no member needs re-verifying. The card-restore screen shows the endorsed address and its endorsements, and clients warn when they are opened at any other address. Members should never scan an identity card on an address the council has not endorsed.
 
 After a domain loss, members find the new address in two ways that do not depend on the lost domain: the project dashboard (btcdao.tech), which shows each DAO's latest endorsed `site`, and an announcement by the council in person or on a call. A DAO relay on the lost domain goes down with it. The public relays in the config still hold every event, so the new listing can be fetched there, and its `relays` field names the DAO's new relays.
+
+### 7.3 DAO relay
+
+Each DAO runs one relay of its own beside at least two public relays. Its policy:
+
+- accept only events of kinds 3570–3586 that carry the DAO's `["D", <dao_id>]` tag, and reject everything else;
+- accept them from any key, because candidates and payout recipients who are not members must be able to publish; clients validate every event anyway;
+- no payment for access, and rate limits per key and per connection to keep spam small;
+- keep every accepted event; never delete.
+
+The reference setup is Nosflare on Cloudflare Workers, with pay-to-relay turned off and its allow lists set to the kinds and tag above. For BOSA DAO's trial it runs at a `workers.dev` address under the Bitcoin-DAO organisation's Cloudflare account; on mainnet it moves to `relay.bosadao.it`. Any relay with the same policy can replace it.
 
 ## 8. Rebuilding state
 

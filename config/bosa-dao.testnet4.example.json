@@ -3,9 +3,9 @@
   "name": "BOSA DAO",
   "description": "Community bitcoin treasury for Bosa, Sardinia. Proof of concept.",
   "languages": ["it", "en"],
-  "network": "signet",
-  "site": "https://signet.bosadao.it",
-  "passkeyDomain": "bosadao.it",
+  "network": "testnet4",
+  "site": "https://bitcoin-dao.github.io/bosa-dao",
+  "passkeyDomain": "bitcoin-dao.github.io",
   "council": [
     { "label": "Council 1", "identityKey": "[npub]", "fingerprint": "[8 hex]", "xpub": "[tpub at m/48'/1'/0'/2']" },
     { "label": "Council 2", "identityKey": "[npub]", "fingerprint": "[8 hex]", "xpub": "[tpub at m/48'/1'/0'/2']" },
@@ -19,8 +19,8 @@
   ],
   "threshold": 3,
   "descriptor": "wsh(sortedmulti(3,[fp1/48h/1h/0h/2h]tpub1/<0;1>/*,[fp2/48h/1h/0h/2h]tpub2/<0;1>/*,[fp3/48h/1h/0h/2h]tpub3/<0;1>/*,[fp4/48h/1h/0h/2h]tpub4/<0;1>/*,[fp5/48h/1h/0h/2h]tpub5/<0;1>/*))#[checksum]",
-  "relays": ["wss://relay.bosadao.it", "wss://[public relay 1]", "wss://[public relay 2]"],
-  "chainApi": ["https://[esplora-compatible endpoint]"],
+  "relays": ["wss://[bosa-dao relay].workers.dev", "wss://[public relay 1]", "wss://[public relay 2]"],
+  "chainApi": ["https://mempool.space/testnet4/api", "https://[second esplora-compatible endpoint]"],
   "rules": {
     "votingPeriodDays": 7,
     "quorum": "1/3",

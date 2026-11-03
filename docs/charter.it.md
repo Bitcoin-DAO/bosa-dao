@@ -103,7 +103,7 @@ Questa carta dice a cosa serve BOSA DAO e come lavoriamo insieme. Ogni membro la
 
 ## Articolo 12 · Fase di prova
 
-1. BOSA DAO inizia sulla rete di prova di Bitcoin (signet), senza denaro vero.
+1. BOSA DAO inizia sulla rete di prova di Bitcoin (testnet4), senza denaro vero.
 2. Passa alla rete principale solo dopo che il recupero dei fondi senza il sito è stato provato, e con il tetto dell'articolo 5.
 3. Alla nascita della DAO sulla rete principale, tutti i membri della prova ne diventano membri fondatori, senza un nuovo voto. Creano nuove chiavi e nuove tessere.
 
