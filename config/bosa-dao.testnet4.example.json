@@ -19,7 +19,7 @@
   ],
   "threshold": 3,
   "descriptor": "wsh(sortedmulti(3,[fp1/48h/1h/0h/2h]tpub1/<0;1>/*,[fp2/48h/1h/0h/2h]tpub2/<0;1>/*,[fp3/48h/1h/0h/2h]tpub3/<0;1>/*,[fp4/48h/1h/0h/2h]tpub4/<0;1>/*,[fp5/48h/1h/0h/2h]tpub5/<0;1>/*))#[checksum]",
-  "relays": ["wss://[bosa-dao relay].workers.dev", "wss://[public relay 1]", "wss://[public relay 2]"],
+  "relays": ["wss://btc-dao-relay.btcdao.workers.dev", "wss://[public relay 1]", "wss://[public relay 2]"],
   "chainApi": ["https://mempool.space/testnet4/api", "https://[second esplora-compatible endpoint]"],
   "rules": {
     "votingPeriodDays": 7,

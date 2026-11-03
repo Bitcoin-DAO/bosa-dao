@@ -25,7 +25,7 @@
 | Closing a DAO | A "Close the DAO" proposal names the destination wallet; two-thirds majority; a final round pays the whole balance there, then the settings are marked closed |
 | Trial network | testnet4, not signet: members can receive test payments on their phones with Nunchuk or Mycelium Testnet, and the organisers already hold test coins. Confirmations are less regular than on signet |
 | Trial site | GitHub Pages at `bitcoin-dao.github.io/bosa-dao`; passkeys tied to `bitcoin-dao.github.io`; content security policy set inside the page |
-| DAO relay | Nosflare on Cloudflare Workers under the Bitcoin-DAO account; only the DAO's kinds (3570–3586) with its `D` tag; no pay-to-relay. Trial on a `workers.dev` address, mainnet at `relay.bosadao.it` |
+| DAO relay | Nosflare on Cloudflare Workers under the Bitcoin-DAO account; only the DAO's kinds (3570–3586) with its `D` tag; no pay-to-relay. Trial at `btc-dao-relay.btcdao.workers.dev`, mainnet at `relay.bosadao.it` |
 | Wallet for members | BlueWallet for mainnet payouts; Nunchuk or Mycelium Testnet for the trial |
 | Moving address | If the domain is lost, the council endorses a new address in a `dao.listing`; members scan their cards there and make a new passkey. Same identities, no re-verification. Members find the new address on btcdao.tech (a separate domain) or from the council; every card carries that fallback line. The DAO relay on the lost domain is replaced, and public relays bridge the gap |
 | Signing (BOSA trial) | One shared SeedSigner plus a spare; each council member has their own verified SD card, a 12-word CompactSeedQR card (21x21) and a steel plate at home. No passphrase in the trial |
