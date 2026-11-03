@@ -16,7 +16,7 @@ All in `src/config.ts` unless noted:
 | Deletion requests (kind 5) | honoured | rejected, as kind 5 is not allowed |
 | Rate limits per connection | 10 events, 50 requests a minute | 60 events (bursts of 120), 120 requests a minute |
 | Relay name, contact | Nosflare's | BOSA DAO's |
-| `wrangler.toml` | `cpu_ms` limit, Nosflare's database | no limit (needed on the free plan); worker and database named `bosa-dao-relay` |
+| `wrangler.toml` | `cpu_ms` limit, Nosflare's database | no limit (needed on the free plan); worker named `btc-dao-relay`, database `bosa-dao-relay` |
 
 Tested locally with `wrangler dev`: a kind 3572 event with a `D` tag is saved and read back with a `#D` filter; a kind 1 note, an event without a `D` tag, one with a malformed `D` tag, and a kind 5 deletion are all refused.
 
@@ -24,13 +24,13 @@ Tested locally with `wrangler dev`: a kind 3572 event with a `D` tag is saved an
 
 1. **Database.** Storage & databases → D1 → Create database. Name it `bosa-dao-relay`, location Western Europe. Copy its **Database ID** into `database_id` in `wrangler.toml` and commit.
 2. **Worker from GitHub.** Workers & Pages → Create → Import a repository. Connect GitHub and allow the Cloudflare app on the Bitcoin-DAO organisation, for the `btc-dao` repository only. Choose `btc-dao`, then:
-   - Project name: `bosa-dao-relay` (must match `name` in `wrangler.toml`)
+   - Project name: `btc-dao-relay` (must match `name` in `wrangler.toml`)
    - Root directory (under Advanced): `relay`
    - Build command: `npm run build`
    - Deploy command: `npx wrangler deploy`
    - Build watch paths, include: `relay/*`, so only relay changes redeploy it
 3. **Deploy**, then open the `workers.dev` address in a browser once: that creates the database tables. The page should say "BOSA DAO relay".
-4. Put the address, as `wss://bosa-dao-relay.<account>.workers.dev`, first in `relays` in the DAO config.
+4. Put the address, as `wss://btc-dao-relay.<account>.workers.dev`, first in `relays` in the DAO config.
 
 ## After founding
 

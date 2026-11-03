@@ -1,5 +1,5 @@
 # Change name if you feel like it
-name = "bosa-dao-relay"
+name = "btc-dao-relay"
 compatibility_date = "2025-01-04"
 main = "worker.js"
 
