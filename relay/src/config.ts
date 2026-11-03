@@ -156,6 +156,11 @@ export const excludedRateLimitKinds = new Set<number>([
   // ... kinds to exclude from EVENT rate limiting Ex: 1, 2, 3
 ]);
 
+// btc-dao: Nosflare also keeps query results in Cloudflare's edge cache for 5 minutes and does
+// not clear them when new events arrive, so clients polling for new events miss them. Off here;
+// the per-connection cache, which new events do clear, stays on.
+export const GLOBAL_QUERY_CACHE = false;
+
 // Database pruning settings (D1 has a 10GB limit)
 export const DB_PRUNING_ENABLED = false; // btc-dao: never delete; the DAO record is kept in full // Set to false to disable automatic pruning
 export const DB_SIZE_THRESHOLD_GB = 9; // Start pruning when database exceeds this size (in GB)

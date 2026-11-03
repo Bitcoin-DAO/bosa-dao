@@ -41,6 +41,7 @@ __export(config_exports, {
   DB_PRUNE_TARGET_GB: () => DB_PRUNE_TARGET_GB,
   DB_PRUNING_ENABLED: () => DB_PRUNING_ENABLED,
   DB_SIZE_THRESHOLD_GB: () => DB_SIZE_THRESHOLD_GB,
+  GLOBAL_QUERY_CACHE: () => GLOBAL_QUERY_CACHE,
   PAY_TO_RELAY_ENABLED: () => PAY_TO_RELAY_ENABLED,
   PUBKEY_RATE_LIMIT: () => PUBKEY_RATE_LIMIT,
   RELAY_ACCESS_PRICE_SATS: () => RELAY_ACCESS_PRICE_SATS,
@@ -295,6 +296,7 @@ var excludedRateLimitKinds = /* @__PURE__ */ new Set([
   1059
   // ... kinds to exclude from EVENT rate limiting Ex: 1, 2, 3
 ]);
+var GLOBAL_QUERY_CACHE = false;
 var DB_PRUNING_ENABLED = false;
 var DB_SIZE_THRESHOLD_GB = 9;
 var DB_PRUNE_BATCH_SIZE = 1e3;
@@ -5374,31 +5376,32 @@ var _RelayWebSocket = class _RelayWebSocket {
       console.log("Returning in-flight query result (deduplication)");
       return await this.activeQueries.get(cacheKey);
     }
-    try {
-      const globalCache = caches.default;
-      const globalCacheKey = await this.generateGlobalCacheKey(filters, bookmark);
-      const globalCached = await globalCache.match(globalCacheKey);
-      if (globalCached) {
-        const cachedDate = globalCached.headers.get("X-Cache-Time");
-        if (cachedDate && Date.now() - parseInt(cachedDate) > 3e5) {
-          console.log("Global cache entry expired, deleting");
-          await globalCache.delete(globalCacheKey);
-        } else {
-          console.log("Returning globally cached query result");
-          const result = await globalCached.json();
-          this.queryCache.set(cacheKey, {
-            result,
-            timestamp: Date.now(),
-            accessCount: 1,
-            lastAccessed: Date.now()
-          });
-          this.addToCacheIndex(cacheKey, filters);
-          return result;
+    if (GLOBAL_QUERY_CACHE)
+      try {
+        const globalCache = caches.default;
+        const globalCacheKey = await this.generateGlobalCacheKey(filters, bookmark);
+        const globalCached = await globalCache.match(globalCacheKey);
+        if (globalCached) {
+          const cachedDate = globalCached.headers.get("X-Cache-Time");
+          if (cachedDate && Date.now() - parseInt(cachedDate) > 3e5) {
+            console.log("Global cache entry expired, deleting");
+            await globalCache.delete(globalCacheKey);
+          } else {
+            console.log("Returning globally cached query result");
+            const result = await globalCached.json();
+            this.queryCache.set(cacheKey, {
+              result,
+              timestamp: Date.now(),
+              accessCount: 1,
+              lastAccessed: Date.now()
+            });
+            this.addToCacheIndex(cacheKey, filters);
+            return result;
+          }
         }
+      } catch (error) {
+        console.error("Error checking global cache:", error);
       }
-    } catch (error) {
-      console.error("Error checking global cache:", error);
-    }
     const cached = this.queryCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.QUERY_CACHE_TTL) {
       console.log("Returning locally cached query result");
@@ -5420,21 +5423,22 @@ var _RelayWebSocket = class _RelayWebSocket {
       if (this.queryCache.size > this.MAX_CACHE_SIZE) {
         this.cleanupQueryCache();
       }
-      try {
-        const globalCache = caches.default;
-        const globalCacheKey = await this.generateGlobalCacheKey(filters, bookmark);
-        const response = new Response(JSON.stringify(result), {
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "public, max-age=300",
-            "X-Cache-Time": Date.now().toString()
-          }
-        });
-        await globalCache.put(globalCacheKey, response);
-        console.log("Stored query result in global cache");
-      } catch (error) {
-        console.error("Error storing in global cache:", error);
-      }
+      if (GLOBAL_QUERY_CACHE)
+        try {
+          const globalCache = caches.default;
+          const globalCacheKey = await this.generateGlobalCacheKey(filters, bookmark);
+          const response = new Response(JSON.stringify(result), {
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "public, max-age=300",
+              "X-Cache-Time": Date.now().toString()
+            }
+          });
+          await globalCache.put(globalCacheKey, response);
+          console.log("Stored query result in global cache");
+        } catch (error) {
+          console.error("Error storing in global cache:", error);
+        }
       return result;
     } finally {
       this.activeQueries.delete(cacheKey);

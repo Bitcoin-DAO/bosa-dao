@@ -15,6 +15,7 @@ All in `src/config.ts` unless noted:
 | Pruning | deletes old events above 9 GB | off: every event is kept |
 | Deletion requests (kind 5) | honoured | rejected, as kind 5 is not allowed |
 | Rate limits per connection | 10 events, 50 requests a minute | 60 events (bursts of 120), 120 requests a minute |
+| Edge query cache | 5 minutes, not cleared by new events | off (`GLOBAL_QUERY_CACHE`, checked in `src/durable-object.ts`), so clients see new events straight away |
 | Relay name, contact | Nosflare's | BOSA DAO's |
 | `wrangler.toml` | `cpu_ms` limit, Nosflare's database | no limit (needed on the free plan); worker named `btc-dao-relay`, database `bosa-dao-relay` |
 

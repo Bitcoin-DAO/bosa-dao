@@ -10,6 +10,7 @@ import {
   containsBlockedContent,
   isTagAllowed,
   hasDaoTag,
+  GLOBAL_QUERY_CACHE,
   excludedRateLimitKinds
 } from './config';
 import { verifyEventSignature, hasPaidForRelay, processEvent, queryEvents } from './relay-worker';
@@ -276,8 +277,8 @@ export class RelayWebSocket implements DurableObject {
       return await this.activeQueries.get(cacheKey)!;
     }
 
-    // Check Cloudflare global cache first
-    try {
+    // Check Cloudflare global cache first (btc-dao: off, because it is not invalidated by new events)
+    if (GLOBAL_QUERY_CACHE) try {
       const globalCache = caches.default;
       const globalCacheKey = await this.generateGlobalCacheKey(filters, bookmark);
       const globalCached = await globalCache.match(globalCacheKey);
@@ -342,8 +343,8 @@ export class RelayWebSocket implements DurableObject {
         this.cleanupQueryCache();
       }
 
-      // Store in Cloudflare global cache
-      try {
+      // Store in Cloudflare global cache (btc-dao: off, see above)
+      if (GLOBAL_QUERY_CACHE) try {
         const globalCache = caches.default;
         const globalCacheKey = await this.generateGlobalCacheKey(filters, bookmark);
         const response = new Response(JSON.stringify(result), {
