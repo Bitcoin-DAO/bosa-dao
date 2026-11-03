@@ -301,11 +301,13 @@ Every client that shows the round rebuilds the expected outputs and refuses to o
 - for a `change_council` migration round, the single output pays the full balance, minus fee, to the first receive address of `new_descriptor`;
 - no other round is open, unless this round spends at least one of the open round's inputs. A round is open from its publication until it has a receipt. Two rounds that share an input can never both confirm, so a replacement round is safe; once one confirms, the other is void.
 
-**Round dates** are computed in the settings' `timezone` (Europe/Rome for BOSA DAO). If fees are above the fee-rate cap on a round date, no round is built that month and the payouts wait.
+**Round dates** are computed in the settings' `timezone` (Europe/Rome for BOSA DAO): the 1st of each month at 00:00. They set when payouts lapse; a council member may publish a round at any time, and its `round` label is the month (`YYYY-MM`) it was prepared in. If fees are above the fee-rate cap on a round date, no round is built that month and the payouts wait.
+
+**Building a round** (reference app): coins largest first; change to the lowest unused address on the change branch, or no change if it would be at or below the dust limit (546 sats), the remainder going to the fee; the fee rate checked against the cap uses an upper-bound size estimate with 72-byte signatures.
 
 **Lapse:** a passed payout lapses if it has not been paid by the second round date after its tally. Round dates on which no round could be built within the fee-rate cap are not counted. A lapsed payout can be proposed again.
 
-**Closing round:** after a `close` proposal passes, is tallied and its destination is confirmed, the next round pays the whole treasury balance, minus the fee, to the destination, with no change output. After its receipt, `threshold` council members endorse a final settings version with `"closed": true`. From its effective time clients accept no new proposals, votes or rounds; the record stays readable.
+**Closing round:** after a `close` proposal passes, is tallied and its destination is confirmed, the next round pays the whole treasury balance, minus the fee, to the destination, with no change output. After its receipt, `threshold` council members endorse a final settings version with `"closed": true`, whose `basis` is the `close` proposal. From its effective time clients accept no new proposals, votes or rounds; the record stays readable.
 
 **Sweeping an old treasury:** after a council change, clients keep watching every earlier descriptor. Anything that arrives there is moved by a sweep round: its inputs are on the earlier descriptor, its single output pays the current treasury's next receive address, and it is signed by council keys that belong to both descriptors. A sweep round is exempt from the one-open-round rule.
 
@@ -319,7 +321,7 @@ Valid when the signer is a council member and every new partial signature in the
 
 ### 6.3 `dao.receipt`
 
-Tags: `["e", <round id>]`. Content: `{"txid": "<hex>", "block_height": 1234567}`. Valid when the chain API confirms that transaction at that height and that it spends the round's inputs to the round's outputs. The round's proposals then show as paid.
+Tags: `["e", <round id>]`. Content: `{"txid": "<hex>", "block_height": 1234567}`. Valid when it is signed by a council member, `txid` is the txid of the round's PSBT (fixed by its unsigned transaction, so it can only be that round's inputs and outputs), and the chain API confirms that transaction at that height. The round's proposals then show as paid. Council apps publish the receipt themselves at the first confirmation.
 
 ### 6.4 Donation address and treasury cap
 

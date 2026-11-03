@@ -21,6 +21,8 @@ export function councilTodo(s: DaoState, myPerson: string): number {
   n += open(s.rosterCandidates, s.pendingRoster);
   n += open(s.settingsCandidates, s.pendingSettings);
   n += s.rekeys.filter(r => r.effectiveAt === undefined && !r.endorsers.includes(myPerson)).length;
+  const openR = s.rounds.find(r => r.status === 'open');
+  if (openR ? !openR.signatures.has(myPerson) || openR.ready : [...s.payments.values()].some(p => p.status === 'waiting')) n++;
   return n;
 }
 
@@ -68,6 +70,8 @@ export function Council() {
   };
 
   const awaiting = s.proposals.filter(p => p.status === 'awaiting_tally').length;
+  const openR = s.rounds.find(r => r.status === 'open');
+  const waitingPay = [...s.payments.values()].filter(p => p.status === 'waiting').length;
   const lastRoster = s.rosters[s.rosters.length - 1].content.version;
   const lastSettings = s.settings[s.settings.length - 1].content.version;
 
@@ -109,6 +113,23 @@ export function Council() {
       <main>
         <h1>{t('cn.title')}</h1>
         {s.rosterDisputed && <p class="warnbox">{t('cn.disputed')}</p>}
+
+        {(waitingPay > 0 || openR) && (
+          <section class="card">
+            <h3>{t('cn.round')}</h3>
+            {openR ? (
+              <>
+                <p class="small">{openR.ready ? t('cn.roundReady', { round: openR.content.round }) : openR.signatures.has(me) ? t('rd.signatures', { n: openR.signatures.size, m: openR.threshold }) : t('cn.roundSign', { round: openR.content.round })}</p>
+                <a class="btn primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href={`#/round/${openR.event.id}`}>{t('cn.open')}</a>
+              </>
+            ) : (
+              <>
+                <p class="small">{t('cn.roundPrepare', { n: waitingPay })}</p>
+                <a class="btn primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="#/round/new">{t('rd.prepare')}</a>
+              </>
+            )}
+          </section>
+        )}
 
         <section class="card">
           <h3>{t('cn.tallies')}</h3>

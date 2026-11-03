@@ -24,6 +24,7 @@ import { Confirm } from './ui/Confirm';
 import { Candidate } from './ui/Candidate';
 import { Sponsor } from './ui/Sponsor';
 import { Council } from './ui/Council';
+import { PrepareRound, RoundDetail } from './ui/Round';
 
 const routes: Record<string, () => preact.JSX.Element> = {
   '/': Home,
@@ -38,6 +39,7 @@ const routes: Record<string, () => preact.JSX.Element> = {
   '/new': NewProposal,
   '/sponsor': Sponsor,
   '/council': Council,
+  '/round/new': PrepareRound,
   '/candidate': () => <Candidate role="candidate" />,
   '/lost': () => <Candidate role="rekey" />,
 };
@@ -78,8 +80,11 @@ function App() {
       </div>
     );
   }
-  const param = path.match(/^\/(p|confirm)\/([0-9a-f]{64})$/);
-  if (param) return <div class="app">{param[1] === 'p' ? <ProposalDetail id={param[2]} /> : <Confirm id={param[2]} />}</div>;
+  const param = path.match(/^\/(p|confirm|round)\/([0-9a-f]{64})$/);
+  if (param) {
+    const [, kind, id] = param;
+    return <div class="app">{kind === 'p' ? <ProposalDetail id={id} /> : kind === 'confirm' ? <Confirm id={id} /> : <RoundDetail id={id} />}</div>;
+  }
   const Screen = routes[path] ?? Home;
   return <div class="app"><Screen /></div>;
 }

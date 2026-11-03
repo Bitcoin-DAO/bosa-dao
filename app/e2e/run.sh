@@ -1,7 +1,7 @@
 #!/bin/bash
 # End-to-end tests: a local relay (relay/ under wrangler), a mock chain API, the built app, Playwright.
 # Needs: npm install in app/ and relay/, Playwright with Chromium, ffmpeg (camera test).
-# Usage: bash e2e/run.sh [founding|governance|all]
+# Usage: bash e2e/run.sh [founding|governance|payouts|all]
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 APP="$HERE/.."
@@ -40,4 +40,11 @@ fi
 if [ "$WHICH" = all ] || [ "$WHICH" = governance ]; then
   start_relay
   node "$HERE/governance.e2e.cjs"
+fi
+if [ "$WHICH" = all ] || [ "$WHICH" = payouts ]; then
+  start_relay
+  kill_matching "esplora-mock"
+  node "$HERE/esplora-mock.mjs" > "$OUT/esplora.log" 2>&1 &
+  sleep 1
+  node "$HERE/payouts.e2e.cjs"
 fi

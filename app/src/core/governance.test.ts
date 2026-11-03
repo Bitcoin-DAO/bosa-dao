@@ -308,3 +308,119 @@ describe('settings (3.4)', () => {
     expect(s.settingsCandidates[0].error).toBe('settings do not follow from the basis');
   });
 });
+
+// ---------- payout rounds (6.1-6.3) and closing ----------
+import { mnemonicToSeedSync } from '@scure/bip39';
+import { buildRound, finalizeRound, masterFromSeed, signWithMnemonicKey, type Utxo } from './round';
+
+describe('payout rounds (6.1-6.3)', () => {
+  const masters = MNEMONICS.map(m => masterFromSeed(mnemonicToSeedSync(m), 'testnet4'));
+  const RECIPIENT = p2wpkh(secp256k1.getPublicKey(hexToBytes('22'.repeat(32)), true), TEST_NETWORK).address!;
+
+  function passedPayout(d: ReturnType<typeof dao>, at: number, amount = 120_000, confirm = true) {
+    const p = d.propose(d.f[0], { type: 'payout', payload: { recipient: 'Tipografia', outputs: [{ address: RECIPIENT, amount_sat: amount }] } }, at);
+    if (confirm) d.ev(KIND.confirm, { address: RECIPIENT }, newSecret(), at + 1, [['e', p.id]]);
+    for (const i of [0, 1, 2]) d.vote(d.f[i], p, 'yes', at + 2);
+    d.tally(d.c[0], d.state(at + 8 * DAY), p, at + 8 * DAY);
+    return p;
+  }
+  function coins(d: ReturnType<typeof dao>): Utxo[] {
+    const desc = parseDescriptor(d.state(d.T).settings[0].content.descriptor, 'testnet4');
+    return [0, 1].map(i => ({ txid: String(i + 1).repeat(64), vout: 0, value: 300_000, address: treasuryAddress(desc, 'testnet4', 0, i).address, branch: 0 as const, index: i }));
+  }
+  function round(d: ReturnType<typeof dao>, ids: string[], outputs: { address: string; amount_sat: number }[], at: number, utxos = coins(d), opts: { feeRate?: number; sweepTo?: string } = {}) {
+    const desc = parseDescriptor(d.state(d.T).settings[0].content.descriptor, 'testnet4');
+    const r = buildRound({ d: desc, network: 'testnet4', utxos, outputs, feeRate: opts.feeRate ?? 2, changeIndex: 0, sweepTo: opts.sweepTo });
+    const e = d.ev(KIND.round, { round: '2026-12', proposals: ids, psbt: r.psbt, fee_rate_sat_vb: opts.feeRate ?? 2, fee_sat: r.fee }, d.c[0], at);
+    return { e, r };
+  }
+
+  it('signs a round with 3 council keys, finalises it and is paid on receipt', () => {
+    const d = dao();
+    const p = passedPayout(d, d.T);
+    const t = d.T + 8 * DAY + 10;
+    let s = d.state(t);
+    expect(s.payments.get(p.id)?.status).toBe('waiting');
+    const { e, r } = round(d, [p.id], [{ address: RECIPIENT, amount_sat: 120_000 }], t);
+    s = d.state(t + 1);
+    expect(s.rounds[0].errors).toEqual([]);
+    expect(s.rounds[0].status).toBe('open');
+    expect(s.payments.get(p.id)?.status).toBe('in_round');
+    const signed: string[] = [];
+    for (const i of [0, 3]) {
+      signed.push(signWithMnemonicKey(r.psbt, masters[i]));
+      d.ev(KIND.sign, { psbt: signed[signed.length - 1] }, d.c[i], t + 2, [['e', e.id]]);
+    }
+    // a council member signing with someone else's key does not count
+    d.ev(KIND.sign, { psbt: signWithMnemonicKey(r.psbt, masters[4]) }, d.c[1], t + 3, [['e', e.id]]);
+    s = d.state(t + 4);
+    expect(s.rounds[0].signatures.size).toBe(2);
+    expect(s.rounds[0].ready).toBe(false);
+    signed.push(signWithMnemonicKey(r.psbt, masters[4]));
+    d.ev(KIND.sign, { psbt: signed[2] }, d.c[4], t + 5, [['e', e.id]]);
+    s = d.state(t + 6);
+    expect(s.rounds[0].ready).toBe(true);
+    const fin = finalizeRound(signed);
+    expect(fin.txid).toBe(s.rounds[0].inspection!.txid);
+    d.ev(KIND.receipt, { txid: 'ff'.repeat(32), block_height: 100 }, d.c[0], t + 7, [['e', e.id]]); // wrong txid: ignored
+    expect(d.state(t + 8).rounds[0].status).toBe('open');
+    d.ev(KIND.receipt, { txid: fin.txid, block_height: 100 }, d.c[0], t + 9, [['e', e.id]]);
+    s = d.state(t + 10);
+    expect(s.rounds[0].status).toBe('paid');
+    expect(s.payments.get(p.id)?.status).toBe('paid');
+  });
+
+  it('refuses rounds that pay the wrong outputs, unconfirmed payouts, high fees or a second open round', () => {
+    const d = dao();
+    const p = passedPayout(d, d.T);
+    const q = passedPayout(d, d.T + 5, 50_000, false);
+    const t = d.T + 8 * DAY + 10;
+    round(d, [p.id], [{ address: RECIPIENT, amount_sat: 130_000 }], t);
+    round(d, [q.id], [{ address: RECIPIENT, amount_sat: 50_000 }], t + 1);
+    round(d, [p.id], [{ address: RECIPIENT, amount_sat: 120_000 }], t + 2, coins(d), { feeRate: 25 });
+    const good = round(d, [p.id], [{ address: RECIPIENT, amount_sat: 120_000 }], t + 3, coins(d).slice(0, 1));
+    const other = round(d, [p.id], [{ address: RECIPIENT, amount_sat: 120_000 }], t + 4, coins(d).slice(1));
+    const replacement = round(d, [p.id], [{ address: RECIPIENT, amount_sat: 120_000 }], t + 5, coins(d).slice(0, 1), { feeRate: 4 });
+    const s = d.state(t + 6);
+    const errs = (i: number) => s.rounds[i].errors.join('; ');
+    expect(errs(0)).toContain('outputs are not exactly the payouts');
+    expect(errs(1)).toContain('not confirmed by its recipient');
+    expect(errs(2)).toContain('fee rate above the cap');
+    expect(s.rounds.find(r => r.event.id === good.e.id)?.status).toBe('open');
+    expect(s.rounds.find(r => r.event.id === other.e.id)?.errors).toContain('another round is open');
+    expect(s.rounds.find(r => r.event.id === replacement.e.id)?.status).toBe('open'); // shares a coin: allowed
+  });
+
+  it('a payout lapses after the second round date without being paid', () => {
+    const d = dao();
+    const p = passedPayout(d, d.T);
+    expect(d.state(d.T + 9 * DAY).payments.get(p.id)?.status).toBe('waiting');
+    expect(d.state(d.T + 75 * DAY).payments.get(p.id)?.status).toBe('lapsed');
+  });
+
+  it('closing: a passed close pays everything to the destination, then the settings close the DAO', () => {
+    const d = dao();
+    const c = d.propose(d.c[0], { type: 'close', payload: { destination: RECIPIENT } }, d.T);
+    d.ev(KIND.confirm, { address: RECIPIENT }, newSecret(), d.T + 1, [['e', c.id]]);
+    for (const i of [0, 1, 2]) d.vote(d.f[i], c, 'yes', d.T + 2);
+    d.tally(d.c[0], d.state(d.T + 8 * DAY), c, d.T + 8 * DAY);
+    const t = d.T + 8 * DAY + 10;
+    const { e, r } = round(d, [c.id], [], t, coins(d), { sweepTo: RECIPIENT });
+    let s = d.state(t + 1);
+    expect(s.rounds[0].errors).toEqual([]);
+    expect(s.rounds[0].isClose).toBe(true);
+    const signed = [0, 1, 2].map(i => signWithMnemonicKey(r.psbt, masters[i]));
+    const fin = finalizeRound(signed);
+    d.ev(KIND.receipt, { txid: fin.txid, block_height: 101 }, d.c[0], t + 2, [['e', e.id]]);
+    s = d.state(t + 3);
+    expect(s.pendingSettings).toEqual([c.id]);
+    const next = nextSettings(s)!;
+    expect(next.closed).toBe(true);
+    const se = d.ev(KIND.settings, next, d.c[0], t + 4);
+    for (const i of [0, 1, 2]) d.endorse(d.c[i], se, 'settings', t + 5);
+    const late = d.propose(d.f[0], { type: 'statement' }, t + 10);
+    s = d.state(t + 11);
+    expect(s.closed).toBe(true);
+    expect(s.rejected.some(x => x.event.id === late.id && x.reason === 'proposal: the DAO is closed')).toBe(true);
+  });
+});

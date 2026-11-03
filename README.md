@@ -11,7 +11,7 @@ A SputnikDAO-style DAO on Bitcoin alone: members propose and vote, a council of 
 
 ## Status
 
-**Testnet4 prototype, stage 2 of 3.** The app (`app/`) covers founding, passkey sign-in, identity cards, the treasury page, proposals and votes, new members, leaving and key replacement. Stage 3 adds payout rounds and council signing. The DAO relay runs on Cloudflare. The first instance is **BOSA DAO**, a proof of concept for a local bitcoin community in Bosa, Sardinia, starting with a trial on testnet4.
+**Testnet4 prototype, stages 1–3 built.** The app (`app/`) covers founding, passkey sign-in, identity cards, the treasury page, proposals and votes, new members, leaving, key replacement, and payout rounds signed by the council and broadcast on testnet4. Next: the phase 1 gate, a real testnet4 payout run by five testers. The DAO relay runs on Cloudflare. The first instance is **BOSA DAO**, a proof of concept for a local bitcoin community in Bosa, Sardinia, starting with a trial on testnet4.
 
 Nothing here is ready for real funds.
 
@@ -34,7 +34,7 @@ All 19 screens are in [`design/`](design/README.md).
 | `docs/test-cases.md` | Test cases every client must pass, test vectors, and the protocol gaps they exposed |
 | `docs/decisions.md` | Decisions taken so far and open questions |
 | `design/` | The mock-up screens (Italian) as source and PNG, plus the spec's diagrams |
-| `app/` | The DAO's website: founding, sign-in, identity cards, treasury, proposals and votes, membership (stages 1 and 2 of the prototype), with unit and end-to-end tests |
+| `app/` | The DAO's website: founding, sign-in, identity cards, treasury, proposals and votes, membership, payout rounds (the phase 1 prototype), with unit and end-to-end tests |
 | `relay/` | The DAO's own Nostr relay: Nosflare set up to keep only the DAO's events, with deployment steps for Cloudflare |
 | `tools/render-mockups/` | Regenerates the screen PNGs from the source files |
 | `config/bosa-dao.testnet4.example.json` | Example config for the reference instance, with placeholders |

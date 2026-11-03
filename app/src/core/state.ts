@@ -6,6 +6,8 @@ import { KIND, byTime, tagValue, verified, type Event } from './events';
 import { btcNetwork, parseDescriptor, treasuryAddress } from './descriptor';
 import { shortCode } from './shortcode';
 import { hashJson, nowSec, parseJson } from './util';
+import { inspectRound, memberSignatures, type RoundContent, type RoundInspection } from './round';
+import { roundDatesAfter } from './time';
 
 // ---------- types ----------
 
@@ -153,6 +155,30 @@ export interface Candidate<T> {
   error?: string;
 }
 
+export interface RoundView {
+  event: Event;
+  content: RoundContent;
+  inspection?: RoundInspection;
+  errors: string[];
+  isClose: boolean;
+  status: 'open' | 'paid' | 'void' | 'invalid';
+  /** Valid partial signatures: person → input index → pubkey. */
+  signatures: Map<string, Map<number, string>>;
+  signEvents: Event[]; // valid dao.sign events carrying signatures
+  declines: { person: string; reason: string; event: Event }[];
+  ready: boolean; // threshold signatures on every input
+  threshold: number;
+  receipt?: Event;
+}
+
+export type PaymentStatus = 'unconfirmed' | 'waiting' | 'in_round' | 'paid' | 'lapsed';
+
+export interface Payment {
+  status: PaymentStatus;
+  round?: RoundView;
+  lapseAt?: number;
+}
+
 export interface DaoState {
   now: number;
   founded?: GenesisCandidate;
@@ -173,6 +199,9 @@ export interface DaoState {
   /** Changes passed or in effect that the current roster does not show yet (basis ids). */
   pendingRoster: string[];
   pendingSettings: string[];
+  rounds: RoundView[];
+  payments: Map<string, Payment>; // passed payouts and closes
+  closed: boolean;
   keywraps: Map<string, { pubkey: string; nonce: string; ct: string; at: number }>;
   rejected: Rejected[];
   personOf(key: string): string;
@@ -316,6 +345,7 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
     now, founded, pending: founded ? [] : candidates, conflict: foundedAll.length > 1,
     rosters: [], settings: [], rosterCandidates: [], settingsCandidates: [], rosterDisputed: false, settingsDisputed: false,
     members: [], proposals: [], verifies: [], rekeys: [], leaves: new Map(), pendingRoster: [], pendingSettings: [],
+    rounds: [], payments: new Map(), closed: false,
     keywraps: new Map(), rejected,
     personOf: k => k, keyOf: p => p, isCouncilAt: () => false, memberAt: () => false,
     rosterAt: () => { throw new Error('not founded'); }, settingsAt: () => { throw new Error('not founded'); },
@@ -412,6 +442,8 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
   // compute everything, extend the chains by one version if a valid one is in effect, and repeat.
   let proposals: ProposalView[] = [];
   let proposalRejected: Rejected[] = []; // from the last pass only
+  let rounds: RoundView[] = [];
+  let payments = new Map<string, Payment>();
   let rosterCandidates: Candidate<RosterContent>[] = [];
   let settingsCandidates: Candidate<SettingsContent>[] = [];
   let rosterDisputed = false;
@@ -472,6 +504,7 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
 
     proposalRejected = [];
     proposals = computeProposals();
+    [rounds, payments] = computeRounds();
 
     if (extendRoster() || extendSettings()) continue;
     break;
@@ -484,6 +517,7 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
       const err = proposalSchemaError(c!, network);
       if (err) { proposalRejected.push({ event: e, reason: `proposal: ${err}` }); continue; }
       if (!memberAt(e.pubkey, e.created_at)) { proposalRejected.push({ event: e, reason: 'proposal: signer is not a member' }); continue; }
+      if (settingsAt(e.created_at).content.closed) { proposalRejected.push({ event: e, reason: 'proposal: the DAO is closed' }); continue; }
       if (c!.type === 'payout' && (c!.payload.outputs as Output[]).some(o => isTreasuryAddress(o.address))) { proposalRejected.push({ event: e, reason: 'proposal: pays the treasury' }); continue; }
       if (c!.type === 'close' && isTreasuryAddress(c!.payload.destination)) { proposalRejected.push({ event: e, reason: 'proposal: pays the treasury' }); continue; }
       if (c!.type === 'add_member') {
@@ -590,6 +624,121 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
     });
   }
 
+  function computeRounds(): [RoundView[], Map<string, Payment>] {
+    const out: RoundView[] = [];
+    const paidAt = new Map<string, number>(); // proposal → receipt time
+    const receipts = ofKind(KIND.receipt);
+    const signs = ofKind(KIND.sign);
+    const tallyAt = (p: ProposalView) => Math.min(...(p.tally?.events.map(e => e.created_at) ?? [Infinity]));
+    const lapseAt = (p: ProposalView) => {
+      const t = tallyAt(p);
+      if (!Number.isFinite(t)) return undefined;
+      return roundDatesAfter(t, p.rules.timezone || 'UTC', Math.max(1, p.rules.lapseAfterRounds ?? 2)).pop();
+    };
+    for (const e of ofKind(KIND.round)) {
+      const c = parseJson<RoundContent>(e.content);
+      const errors: string[] = [];
+      const sv = settingsAt(e.created_at).content;
+      if (!c || !Array.isArray(c.proposals) || !c.proposals.length || typeof c.psbt !== 'string') {
+        proposalRejected.push({ event: e, reason: 'round: malformed' });
+        continue;
+      }
+      if (!isCouncilAt(e.pubkey, e.created_at)) errors.push('signer is not on the council');
+      if (sv.closed) errors.push('the DAO is closed');
+      let ins: RoundInspection | undefined;
+      let d: ReturnType<typeof parseDescriptor> | undefined;
+      try {
+        d = parseDescriptor(sv.descriptor, network);
+        ins = inspectRound(c.psbt, d, network);
+        errors.push(...ins.errors);
+      } catch {
+        errors.push('cannot read the PSBT');
+      }
+      const props = c.proposals.map(id => proposals.find(p => p.event.id === id));
+      const isClose = props.some(p => p?.content.type === 'close');
+      for (const [i, p] of props.entries()) {
+        if (!p) { errors.push(`unknown proposal ${c.proposals[i].slice(0, 8)}`); continue; }
+        if (p.status !== 'passed' || !['payout', 'close'].includes(p.content.type)) errors.push(`proposal ${p.number} is not a passed payout`);
+        if (!p.confirmed) errors.push(`proposal ${p.number} is not confirmed by its recipient`);
+        const paid = paidAt.get(p.event.id);
+        if (paid !== undefined && paid <= e.created_at) errors.push(`proposal ${p.number} is already paid`);
+        const l = lapseAt(p);
+        if (l !== undefined && e.created_at >= l) errors.push(`proposal ${p.number} has lapsed`);
+      }
+      if (ins) {
+        const nonChange = ins.outputs.filter(o => o.change === undefined);
+        if (isClose) {
+          const dest = props.find(p => p?.content.type === 'close')?.content.payload.destination;
+          if (props.length !== 1) errors.push('a closing round pays only the close proposal');
+          if (ins.outputs.length !== 1 || ins.outputs[0].address !== dest) errors.push('a closing round has one output, to the destination');
+        } else {
+          const want = props.flatMap(p => (p?.content.type === 'payout' ? (p.content.payload.outputs as Output[]) : [])).map(o => `${o.address}:${o.amount_sat}`).sort();
+          const got = nonChange.map(o => `${o.address}:${o.value}`).sort();
+          if (hashJson(want) !== hashJson(got)) errors.push('outputs are not exactly the payouts');
+        }
+        if (c.fee_sat !== ins.fee) errors.push('fee_sat does not match the PSBT');
+        if (ins.fee <= 0) errors.push('no fee');
+        if (ins.fee / ins.vsize > sv.rules.maxFeeRateSatVb + 0.01 || c.fee_rate_sat_vb > sv.rules.maxFeeRateSatVb) errors.push('fee rate above the cap');
+        // one open round at a time, unless this one replaces it by spending one of its coins
+        const outpoints = new Set(ins.inputs.map(x => `${x.txid}:${x.vout}`));
+        const open = out.filter(r => r.status === 'open' && r.event.created_at <= e.created_at && !(r.receipt && r.receipt.created_at <= e.created_at));
+        if (open.length && !open.some(r => r.inspection?.inputs.some(x => outpoints.has(`${x.txid}:${x.vout}`)))) errors.push('another round is open');
+      }
+
+      const threshold = sv.threshold;
+      const signatures = new Map<string, Map<number, string>>();
+      const signEvents: Event[] = [];
+      const declines: RoundView['declines'] = [];
+      if (ins && d && !errors.length) {
+        for (const sg of signs.filter(x => tagValue(x, 'e') === e.id)) {
+          if (!isCouncilAt(sg.pubkey, sg.created_at)) continue;
+          const person = personOf(sg.pubkey);
+          const b = parseJson<{ psbt?: string; decline?: string }>(sg.content);
+          if (b?.decline !== undefined) { declines.push({ person, reason: String(b.decline), event: sg }); continue; }
+          const entry = sv.council.find(x => personOf(x.identityKey) === person);
+          if (!b?.psbt || !entry) continue;
+          let sigs: Map<number, string>;
+          try { sigs = memberSignatures(b.psbt, d, network, entry, ins); } catch { continue; }
+          if (!sigs.size) continue;
+          const prev = signatures.get(person) ?? new Map();
+          for (const [k, v] of sigs) prev.set(k, v);
+          signatures.set(person, prev);
+          signEvents.push(sg);
+        }
+      }
+      const ready = !!ins && ins.inputs.length > 0 && ins.inputs.every((_, i) => [...signatures.values()].filter(m => m.has(i)).length >= threshold);
+      const receipt = ins && receipts.find(r => {
+        const b = parseJson<{ txid: string; block_height: number }>(r.content);
+        return tagValue(r, 'e') === e.id && b?.txid === ins!.txid && Number.isInteger(b.block_height) && isCouncilAt(r.pubkey, r.created_at);
+      });
+      const view: RoundView = {
+        event: e, content: c, inspection: ins, errors, isClose, signatures, signEvents, declines, ready, threshold, receipt,
+        status: errors.length ? 'invalid' : receipt ? 'paid' : 'open',
+      };
+      if (view.status === 'paid') for (const id of c.proposals) if (!paidAt.has(id)) paidAt.set(id, receipt!.created_at);
+      out.push(view);
+    }
+    // A round that shares a coin with a paid round can never confirm.
+    for (const r of out) {
+      if (r.status !== 'open') continue;
+      const mine = new Set(r.inspection?.inputs.map(x => `${x.txid}:${x.vout}`));
+      if (out.some(o => o !== r && o.status === 'paid' && o.inspection?.inputs.some(x => mine.has(`${x.txid}:${x.vout}`)))) r.status = 'void';
+    }
+    const pay = new Map<string, Payment>();
+    for (const p of proposals) {
+      if (p.status !== 'passed' || !['payout', 'close'].includes(p.content.type)) continue;
+      const paidRound = out.find(r => r.status === 'paid' && r.content.proposals.includes(p.event.id));
+      const openRound = out.find(r => r.status === 'open' && r.content.proposals.includes(p.event.id));
+      const l = lapseAt(p);
+      pay.set(p.event.id, paidRound ? { status: 'paid', round: paidRound, lapseAt: l }
+        : openRound ? { status: 'in_round', round: openRound, lapseAt: l }
+        : l !== undefined && now >= l ? { status: 'lapsed', lapseAt: l }
+        : !p.confirmed ? { status: 'unconfirmed', lapseAt: l }
+        : { status: 'waiting', lapseAt: l });
+    }
+    return [out, pay];
+  }
+
   /** The members a roster version must have, given its predecessor and basis. */
   function expectedRoster(prev: RosterContent, basis: string[], next: RosterEntry[]): RosterEntry[] | string {
     let members = prev.members.map(m => ({ ...m }));
@@ -680,8 +829,14 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
 
   function expectedSettings(prev: SettingsContent, basis: string[]): Omit<SettingsContent, 'version' | 'prev' | 'basis'> | string {
     const rules = JSON.parse(JSON.stringify(prev.rules)) as Rules;
+    let closed = prev.closed;
     for (const id of basis) {
       const p = passed(id);
+      if (p?.content.type === 'close') {
+        if (payments.get(id)?.status !== 'paid') return `closing round not paid yet: ${id}`;
+        closed = true;
+        continue;
+      }
       if (p?.content.type !== 'change_rules') return `basis not a passed rules change: ${id}`;
       for (const ch of p.content.payload.changes as { path: string; from: unknown; to: unknown }[]) {
         const key = ch.path.slice('rules.'.length);
@@ -689,7 +844,7 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
         rules[key] = ch.to;
       }
     }
-    return { rules, closed: prev.closed, council: prev.council, threshold: prev.threshold, descriptor: prev.descriptor };
+    return { rules, closed, council: prev.council, threshold: prev.threshold, descriptor: prev.descriptor };
   }
 
   function extendSettings(): boolean {
@@ -735,7 +890,10 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
   for (const l of leaves.values()) if (!appliedRoster.has(l.id) && current.members.some(m => personOf(m.key) === personOf(l.pubkey))) pendingRoster.push(l.id);
   for (const r of rekeys) if (r.effectiveAt !== undefined && !appliedRoster.has(r.event.id) && current.members.some(m => m.key === r.oldKey)) pendingRoster.push(r.event.id);
   const appliedSettings = new Set(settings.flatMap(s => s.content.basis ?? []));
-  const pendingSettings = proposals.filter(p => p.status === 'passed' && p.content.type === 'change_rules' && !appliedSettings.has(p.event.id)).map(p => p.event.id);
+  const closedNow = settings[settings.length - 1].content.closed;
+  const pendingSettings = proposals
+    .filter(p => p.status === 'passed' && !appliedSettings.has(p.event.id) && (p.content.type === 'change_rules' || (p.content.type === 'close' && !closedNow && payments.get(p.event.id)?.status === 'paid')))
+    .map(p => p.event.id);
 
   const members: Member[] = current.members.map(m => ({
     key: m.key, person: personOf(m.key), name: m.name, council: m.council, verified: m.verified, since: dateToUnix(m.since),
@@ -756,7 +914,7 @@ export function rebuild(site: SiteConfig, events: Event[], prefer?: string, now 
     ...empty,
     rosters, settings, rosterCandidates, settingsCandidates, rosterDisputed, settingsDisputed,
     members, rules: settings[settings.length - 1].content.rules, proposals, verifies, rekeys, leaves,
-    pendingRoster, pendingSettings, keywraps,
+    pendingRoster, pendingSettings, rounds, payments, closed: closedNow, keywraps,
     personOf, keyOf, isCouncilAt, memberAt, rosterAt, settingsAt, isTreasuryAddress,
   };
 }
@@ -800,10 +958,12 @@ export function nextSettings(s: DaoState): SettingsContent | undefined {
   if (!s.pendingSettings.length) return;
   const last = s.settings[s.settings.length - 1];
   const rules = JSON.parse(JSON.stringify(last.content.rules)) as Rules;
+  let { closed } = last.content;
   for (const id of s.pendingSettings) {
     const p = s.proposals.find(x => x.event.id === id)!;
-    for (const ch of p.content.payload.changes as { path: string; to: unknown }[]) rules[ch.path.slice('rules.'.length)] = ch.to;
+    if (p.content.type === 'close') closed = true;
+    else for (const ch of p.content.payload.changes as { path: string; to: unknown }[]) rules[ch.path.slice('rules.'.length)] = ch.to;
   }
-  const { council, threshold, descriptor, closed } = last.content;
+  const { council, threshold, descriptor } = last.content;
   return { version: last.content.version + 1, prev: last.hash, basis: s.pendingSettings, rules, closed, council, threshold, descriptor };
 }
