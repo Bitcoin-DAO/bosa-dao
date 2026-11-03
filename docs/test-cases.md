@@ -2,7 +2,7 @@
 
 These cases define what a correct btc-dao client must do with each kind of event (requirement S4). Each case gives the starting state, the events or input, and the expected result, with the protocol section it tests. Phase 1 turns every row into an automated test with real signed fixtures; a client is ready for BOSA DAO only when all of them pass.
 
-Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are collected, with a proposed fix, under [Findings](#findings).
+Cases marked with a gap number tested a rule `protocol.md` did not settle when they were first written. The [Findings](#findings) table records each gap and how it was resolved.
 
 ## Conventions
 
@@ -33,7 +33,7 @@ Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are c
 | F-04 | Endorsement of the genesis by a key not in its `council` | Does not count | 3.2 |
 | F-05 | A endorses the genesis twice | Counts once | 3.2 |
 | F-06 | Endorsement whose `hash` does not match the endorsed event's content | Rejected | 3.2 |
-| F-07 | Genesis published by F1 (a founder not on the council) | **Gap 1**: proposed Rejected | 3.1 |
+| F-07 | Genesis published by F1 (a founder not on the council) | Rejected (Gap 1) | 3.1 |
 | F-08 | Founder's browser holds a key not listed in the endorsed genesis | No keywrap and no card offered; app says to contact the council | 3.5 |
 | F-09 | Founder's browser sees the endorsed genesis | Publishes one `dao.keywrap`; card offered with the right `dao8` | 3.5 |
 
@@ -47,12 +47,13 @@ Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are c
 | R-04 | Roster v3 published while v2 does not exist | Rejected: version gap | 3.3 |
 | R-05 | Roster v2 whose `prev` is not the hash of v1 | Rejected | 3.3 |
 | R-06 | Roster v2 endorsed by only 2 council members | Not in effect | 3.2, 3.3 |
-| R-07 | Two different roster v2 events, each with 3 endorsements (one council member endorsed both) | **Gap 2**: proposed both disputed until the council endorses a v3 that names one as `prev` | 3.3 |
+| R-07 | Two different roster v2 events, each with 3 endorsements (one council member endorsed both) | Both disputed until the council endorses a v3 that names one as `prev`; the double endorser is flagged (Gap 2) | 3.3 |
 | R-08 | Roster v2 drops F2, basis = F2's valid `dao.leave` | Accepted | 3.3, 5.3 |
 | R-09 | Roster v2 replaces F1's key, basis = endorsed `dao.rekey` | Accepted; F1 keeps name, `since` and history | 3.3, 5.2 |
-| R-10 | Roster changes council flags after a passed change-council proposal | **Gap 3**: the basis list does not include change-council proposals | 3.3 |
-| R-11 | Rules v2, basis = passed and tallied change-rules proposal, endorsed by 3 | Accepted from the third endorsement; proposals published earlier keep the rules version they started under | 3.4 |
-| R-12 | Rules v2 changes a value the proposal did not name | Rejected | 3.4 |
+| R-10 | Roster changes council flags after a passed change-council proposal whose migration has a receipt | Accepted; settings version with the new council and descriptor endorsed alongside (Gap 3) | 3.3, 3.4 |
+| R-11 | Settings v2, basis = passed and tallied change-rules proposal, endorsed by 3 | Accepted from the third endorsement; proposals published earlier keep the settings version they started under | 3.4 |
+| R-12 | Settings v2 changes a value the proposal did not name | Rejected | 3.4 |
+| R-13 | Settings v2 with a new council and descriptor, but the migration round has no receipt yet | Not in effect | 3.4 |
 
 ## 4. Proposals
 
@@ -66,11 +67,12 @@ Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are c
 | P-06 | Payout to one of the treasury's own addresses | Rejected | 4.1 |
 | P-07 | Payout output below the dust limit | Rejected | 4.1 |
 | P-08 | Two proposals with the same `created_at` | Numbered in order of `id` | 4.1 |
-| P-09 | A proposal dated three days ago appears after proposal 7 was published | **Gap 4**: it would renumber every later proposal; proposed Rejected if dated before the most recent tallied proposal, otherwise accepted and flagged as backdated | 4.1 |
+| P-09 | A backdated proposal arrives after proposal 7 was published | Rejected if dated before the most recently tallied proposal; otherwise accepted and flagged as backdated (Gap 4) | 4.1 |
+| P-09b | Tally of proposal 7 records number 7 | Number 7 is fixed for good | 4.1, 4.4 |
 | P-10 | Add-member proposal with one in-person `dao.verify` | Accepted | 4.1, 5.1 |
 | P-11 | Add-member proposal with two remote verifications, both by A | Rejected: two distinct council members needed | 4.1 |
 | P-12 | Add-member proposal whose verification is for a different key | Rejected | 4.1 |
-| P-13 | Payout to a member (recipient is F1) | F1's vote excluded with reason `recipient` (needs **Gap 5**: the payload has no recipient key) | 4.3 |
+| P-13 | Payout to a member (recipient is F1) | F1's vote counts like any other (Gap 5 dropped) | 4.3 |
 
 ## 5. Recipient confirmations
 
@@ -80,7 +82,7 @@ Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are c
 | C-02 | Confirmation of an address not in the outputs | Rejected | 4.2 |
 | C-03 | Payout to a non-proposer passes with no confirmation | Not eligible for a round; status "waiting for confirmation" | 4.2 |
 | C-04 | Confirmation arrives after the payout passed | Payout joins the next round | 4.2 |
-| C-05 | Still unconfirmed when the lapse limit is reached | Status Lapsed (needs **Gap 6**: when the lapse count starts) | 4.2 |
+| C-05 | Still unconfirmed at the second round date after its tally | Status Lapsed (Gap 6) | 4.2, 6.1 |
 | C-06 | Confirmation with a valid BIP-322 signature | Shown as "address proven" | 4.2 |
 | C-07 | Confirmation with an invalid BIP-322 signature | Accepted as a plain confirmation, with a warning | 4.2 |
 
@@ -94,10 +96,10 @@ Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are c
 | V-04 | F2 votes, then leaves before the close | F2's vote withdrawn | 4.3, 5.3 |
 | V-05 | F2 leaves after the close | F2's vote counts | 4.3 |
 | V-06 | Vote from a key not on any roster | Not eligible | 4.3 |
-| V-07 | F1 votes, F1's key is replaced, then F1 votes again with the new key on the same proposal | **Gap 7**: the new key was not on the roster when the proposal was published; proposed: it counts and replaces the old vote | 4.3, 5.2 |
+| V-07 | F1 votes, F1's key is replaced, then F1 votes again with the new key on the same proposal | The new vote counts and replaces the old one (Gap 7) | 4.3, 5.2 |
 | V-08 | Vote dated after the close | Excluded: `late` | 4.3, 4.4 |
-| V-09 | Quorum is exactly one third | **Gap 8**: "active member" is undefined; proposed quorum = ceiling of one third of eligible voters | 4.3 |
-| V-10 | Early close: every eligible member has voted yes on day 2 | **Gap 9**: votes can still change, so the result is never final before the period ends; proposed: drop early close | 4.3 |
+| V-09 | 18 eligible voters, 6 vote | Quorum met (one third of 18, rounded up, is 6); with 5 votes it is not (Gap 8) | 4.3 |
+| V-10 | Every eligible member has voted yes by day 2 | Vote stays open until day 7; a member may still change their vote (Gap 9) | 4.3 |
 
 ## 7. Tallies
 
@@ -110,7 +112,8 @@ Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are c
 | T-05 | Tally whose `closed_at` differs from the computed close | Rejected | 4.4 |
 | T-06 | Client holds a vote dated before the close that the tally neither counts nor excludes | Tally stands; proposal shows a warning | 4.4 |
 | T-07 | Second, different tally by B | Proposal Disputed; no payout, roster or rules change acts on it | 4.4 |
-| T-08 | Disputed proposal, then 3 council endorsements of B's tally | B's tally stands (needs **Gap 10**: `tally` is missing from the endorsement objects in 3.2) | 3.2, 4.4 |
+| T-08 | Disputed proposal, then 3 council endorsements of B's tally | B's tally stands (Gap 10) | 3.2, 4.4 |
+| T-10 | Tally whose `number` differs from the derived proposal number | Rejected | 4.4 |
 | T-09 | A publishes the same tally twice | Counts once; not a dispute | 4.4 |
 
 ## 8. Verification, key replacement, leaving
@@ -147,7 +150,7 @@ Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are c
 | I-04 | Old card of F1 after F1's key was replaced | Refused: key no longer on the roster | 1.7, 5.2 |
 | I-05 | Card of a candidate with a valid `dao.verify`, before admission | Accepted | 1.7 |
 | I-06 | Card scanned on an address with no endorsed listing | Warning shown before scanning | 7.2 |
-| I-07 | Payload in lower case, or with extra spaces | **Gap 11**: proposed accept any case and trim; the printed format stays upper case | 1.7 |
+| I-07 | Payload in lower case, or with extra spaces or line breaks | Accepted (Gap 11) | 1.7 |
 
 ## 11. Payout rounds
 
@@ -164,8 +167,9 @@ Cases marked **Gap** expose a rule `protocol.md` does not settle yet. They are c
 | P-R09 | An input that is not a treasury output, or already spent | Sign refused | 6.1 |
 | P-R10 | An input missing `bip32_derivation` for one of the five keys | Sign refused | 6.1 |
 | P-R11 | Round with no proposals | Rejected | 6.1 |
-| P-R12 | Two open rounds both include the same proposal, with different inputs | **Gap 12**: both could confirm and pay twice; proposed one open round at a time | 6.1 |
-| P-R13 | Change-council migration round sending everything to the new descriptor | Sign offered (needs **Gap 3** settled for where the new descriptor lives) | 6.1 |
+| P-R12 | A second round published while the first is open, with no shared input | Sign refused (Gap 12) | 6.1 |
+| P-R12b | Replacement round sharing an input with the open round | Sign offered; whichever confirms first voids the other | 6.1 |
+| P-R13 | Change-council migration round sending everything to the new descriptor | Sign offered; after its receipt, the new settings version takes the council and descriptor | 6.1, 3.4 |
 
 ## 12. Signatures and receipts
 
@@ -213,19 +217,19 @@ Phase 1 adds full signed fixtures for every case above: a genesis, rosters, prop
 
 ## Findings
 
-Writing the cases turned up twelve rules the protocol does not settle yet. Each needs a decision before phase 1 code.
+Writing the cases turned up twelve rules the protocol did not settle. All are now resolved in `protocol.md`.
 
-| Gap | Problem | Proposed fix |
+| Gap | Problem | Resolution |
 | --- | --- | --- |
 | 1 | Anyone could publish a genesis | Only a key in the genesis `council` may publish it |
 | 2 | Two different versions of the roster or rules can each reach 3 endorsements if one council member endorses both | Both are disputed until the council endorses a next version that names one as `prev`; endorsing two conflicting versions is flagged |
-| 3 | After a council change, nothing records the new council keys and descriptor, and the roster basis list does not include change-council proposals | Add the council and descriptor to the endorsed versioned record (the rules chain, renamed "settings"), and add change-council to the roster basis list |
+| 3 | After a council change, nothing records the new council keys and descriptor, and the roster basis list does not include change-council proposals | `dao.rules` became `dao.settings`, holding rules, council, threshold and descriptor; change-council is a roster basis once its migration has a receipt |
 | 4 | Proposal numbers follow `created_at`, which the proposer chooses, so a backdated proposal renumbers later ones | Each tally records its proposal's number, which then never changes; a proposal dated before the most recent tallied proposal is rejected. Numbers can then shift only among proposals still open, and only through an obvious backdating that the app flags |
-| 5 | The payout payload has no recipient key, so "payout to a member" cannot be detected | Add an optional `recipient_key` to payouts; set automatically when the recipient is a member |
+| 5 | The payout payload has no recipient key, so "payout to a member" cannot be detected | Dropped: a member may vote on a payout to themselves, so no recipient key is needed |
 | 6 | "Lapse after 2 rounds" has no starting point | Count round dates (the 1st of each month) after the tally |
 | 7 | A member whose key was replaced mid-vote cannot vote with the new key | Eligibility follows the person through key replacements: the new key inherits the old key's eligibility and its latest vote |
-| 8 | "Active member" in the quorum is undefined | Quorum = one third of eligible voters, rounded up; drop "active" until there is a rule for it |
+| 8 | "Active member" in the quorum is undefined | Quorum = one third of eligible voters, rounded up; the "inactive member" status is removed |
 | 9 | Early close conflicts with changing votes | Drop early close: every vote runs its full period |
 | 10 | Tally endorsements are used in 4.4 but `tally` is not an endorsement object in 3.2 | Add `tally` to the objects in 3.2 |
 | 11 | Card payload case and spacing are not specified for scanning | Scanners accept any case and trim spaces; printing stays upper case |
-| 12 | Two open rounds can include the same proposal and both confirm | Only one open round at a time: a new round is valid only after the previous one has a receipt or the council marks it abandoned, and a replacement round spends at least one of the same inputs so both can never confirm |
+| 12 | Two open rounds can include the same proposal and both confirm | One open round at a time; a replacement round must spend one of the open round's inputs, so only one can ever confirm |

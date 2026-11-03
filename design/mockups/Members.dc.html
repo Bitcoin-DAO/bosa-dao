@@ -59,8 +59,7 @@ a{color:#1F6B70}a:hover{color:#10292E}
 <span style="{{m.noteStyle}}">{{m.note}}</span>
 </div>
 </sc-for>
-<p style="margin: 8px 0 0; font-size: 12px; color: #4A5D61">Inattivo: nessun voto da 3 mesi. Non conta per il quorum; torna attivo al primo voto.</p>
-<p style="margin: 4px 0 0; font-size: 12px; color: #4A5D61">Verificato a distanza: iscritto in videochiamata con 2 membri del Consiglio. Vota come tutti; durante la prova non può entrare nel Consiglio.</p>
+<p style="margin: 8px 0 0; font-size: 12px; color: #4A5D61">Verificato a distanza: iscritto in videochiamata con 2 membri del Consiglio. Vota come tutti; durante la prova non può entrare nel Consiglio.</p>
 </section>
 
 <section aria-labelledby="versioni" style="background: #FFFFFF; border: 1px solid #D5DDDC; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 4px">
@@ -89,7 +88,6 @@ a{color:#1F6B70}a:hover{color:#10292E}
 class Component extends DCLogic {
 renderVals() {
 const quiet = 'font-size: 12px; color: #4A5D61;';
-const flag = 'font-size: 12px; color: #7A3306; font-weight: 600;';
 const names = ['@maria', '@francesco', '@elena', '@paolo', '@chiara', '@davide', '@federica', '@matteo', '@silvia', '@roberto', '@laura', '@andrea', '@nina'];
 const joined = ['set', 'set', 'set', 'set', 'set', 'ott', 'ott', 'ott', 'ott', 'ago', 'ott', 'ott', 'ott'];
 return {
@@ -99,8 +97,8 @@ council: [
 ],
 members: names.map((n, k) => ({
 name: n,
-note: n === '@roberto' ? 'inattivo' : n === '@nina' ? 'verificata a distanza' : 'dal ' + joined[k],
-noteStyle: n === '@roberto' ? flag : n === '@nina' ? 'font-size: 12px; color: #1F4F53; font-weight: 600;' : quiet
+note: n === '@nina' ? 'verificata a distanza' : 'dal ' + joined[k],
+noteStyle: n === '@nina' ? 'font-size: 12px; color: #1F4F53; font-weight: 600;' : quiet
 })),
 versions: [
 { title: 'Versione 5 · 18 membri', detail: '22 ott · +@federica, +@matteo, +@silvia · conferme di @anna, @luca, @sara' },

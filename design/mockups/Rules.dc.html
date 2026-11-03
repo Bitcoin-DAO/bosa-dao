@@ -75,15 +75,14 @@ return {
 groups: [
 { title: 'Voto', rules: [
 { k: 'Chi vota', v: 'un membro, un voto', since: orig },
-{ k: 'Durata del voto', v: '7 giorni', since: orig },
-{ k: 'Quorum', v: '1/3 dei membri attivi', since: orig },
+{ k: 'Durata del voto', v: '7 giorni, sempre interi', since: orig },
+{ k: 'Quorum', v: '1/3 di chi può votare', since: orig },
 { k: 'Pagamenti, dichiarazioni, nuovi membri', v: 'maggioranza semplice', since: orig },
-{ k: 'Rimozioni, regole, Consiglio', v: 'due terzi', since: orig },
-{ k: 'Membro inattivo dopo', v: '3 mesi senza votare', since: orig }
+{ k: 'Rimozioni, regole, Consiglio', v: 'due terzi', since: orig }
 ] },
 { title: 'Tesoreria', rules: [
 { k: 'Firme necessarie', v: '3 su 5', since: 'dal 1 set · BOSA-0001' },
-{ k: 'Giro di pagamenti', v: 'il 1° di ogni mese', since: orig },
+{ k: 'Giro di pagamenti', v: 'il 1° di ogni mese, uno alla volta', since: orig },
 { k: 'Proposta decade dopo', v: '2 giri non pagati', since: orig },
 { k: 'Commissione massima per giro', v: '5.000 sats', since: orig },
 { k: 'Tetto della tesoreria (prova)', v: '5.000.000 sats', since: orig }

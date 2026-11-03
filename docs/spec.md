@@ -216,29 +216,27 @@ Members decide by vote; the council makes money decisions binding by signing and
 | Add member | Admits a person by their identity key | Simple majority, quorum met | 3 council endorsements of the new roster |
 | Remove member | Removes a person from the roster | Two-thirds majority, quorum met | 3 council endorsements of the new roster |
 | Change rules | Edits governance values (periods, quorum, cadence) | Two-thirds majority, quorum met | 3 council endorsements of the new rules |
-| Change council | Replaces a keyholder or the threshold | Two-thirds majority, quorum met | 3 council signatures on the migration transaction |
+| Change council | Replaces a keyholder or the threshold | Two-thirds majority, quorum met | 3 council signatures on the migration transaction, then 3 endorsements of the new settings |
 
 ### Voting
 
-- **Who votes:** every member on the roster when the proposal was published, one vote each: yes, no or abstain. A member who leaves or is removed before the close loses their vote.
-- **Recipients:** a member who would receive a payout cannot vote on it; their vote is not counted.
-- **Voting period:** 7 days from publication.
-- **Quorum:** at least one third of members cast a vote. Abstain counts toward quorum.
-- **Early end:** a proposal closes as soon as its result can no longer change.
+- **Who votes:** every member on the roster when the proposal was published, one vote each: yes, no or abstain. A member who leaves or is removed before the close loses their vote. A member whose key is replaced during the vote keeps it, and votes with the new key.
+- **Voting period:** 7 days from publication. Every vote runs its full period; there is no early close, because votes can change until the end.
+- **Quorum:** at least one third of eligible voters, rounded up, cast a vote. Abstain counts toward quorum.
 - **Votes are public** and signed; a member may change their vote until the period ends.
-- **Final tally:** at the close a council member signs the list of votes that counted (S3). Clients use it instead of recounting. Two conflicting tallies leave the proposal disputed until 3 council members endorse one.
+- **Final tally:** at the close a council member signs the list of votes that counted (S3), with the proposal's number. Clients use it instead of recounting. Two conflicting tallies leave the proposal disputed until 3 council members endorse one.
 
 ### Lifecycle
 
 1. **Draft:** any member writes a proposal; payouts carry amount, recipient address and purpose.
 2. **Voting:** open for the voting period.
-3. **Passed** or **Rejected:** fixed by the signed final tally, once the period ends or the result is certain.
+3. **Passed** or **Rejected:** fixed by the signed final tally when the voting period ends.
 4. **Binding step:** passed payouts join the next payout round; roster and rule changes await council endorsement.
 5. **Done** with a receipt, **Declined** by the council with a public reason, or **Lapsed** if not made binding within 2 payout rounds.
 
 Past proposals of every status stay visible forever. The council may decline a passed payout, but must publish why; that refusal is itself part of the public record.
 
-Proposal numbers (BOSA-0007) are not stored in events. Every client numbers valid proposals by publication time, then event id, so all clients show the same numbers without a coordinator.
+Proposal numbers (BOSA-0007) are not stored in events. Every client numbers valid proposals by publication time, then event id, so all clients show the same numbers without a coordinator. The signed final tally records the number for good, and a proposal dated before the most recently tallied one is rejected, so a backdated proposal cannot renumber closed ones.
 
 ## Proposal fields
 
@@ -266,7 +264,6 @@ Every proposal has a short binding summary plus an optional link to the full tex
 | Payout | Recipient name | Display name; may be a non-member |
 | Payout | Recipient bitcoin address | Own box; paste or scan QR; checked for format and network; treasury's own addresses rejected |
 | Payout | Amount (sats) | Fixed in sats; euro estimate shown |
-| Payout | Recipient is a member | Automatic; if yes, the recipient cannot vote on it and it is flagged |
 | Payout | Recipient confirmation | Recipient confirms the address; required when proposer and recipient differ |
 | Add member | Candidate display name | Pseudonym allowed |
 | Add member | Candidate identity key | Created at in-person sign-up |
@@ -300,7 +297,7 @@ All payouts passed since the last round go out together in one monthly transacti
 - **Verify:** every other browser rebuilds the expected outputs from the passed proposals and refuses to show Sign if they differ by a single sat.
 - **Sign:** members sign in any order, alone or at a meeting in Bosa. Each partial signature is published; on its own it can spend nothing.
 - **Broadcast:** the browser that sees the third valid signature combines them and broadcasts; any other browser can rebroadcast.
-- **Decline:** a council member may refuse with a public reason; a round that never reaches 3 signatures lapses after 2 rounds.
+- **Decline:** a council member may refuse with a public reason; a round that never reaches 3 signatures lapses after 2 rounds. Only one round is open at a time: a replacement round spends at least one of the same coins, so the two can never both be paid.
 
 ## Event formats
 
@@ -310,18 +307,18 @@ Every event carries a `D` tag holding the DAO id and a `v` tag with the protocol
 
 | Event (kind) | Signed by | Content | Valid when |
 | --- | --- | --- | --- |
-| `dao.genesis` (3570) | Founding council member | Initial config: name, rules, council identity keys, xpubs, descriptor, relays | Its hash is the DAO id; endorsed by 3 council identity keys |
-| `dao.endorse` (3571) | Council member (identity key) | Hash of a genesis, roster, rules, key replacement, tally or listing | Signer is on the council in effect; the object takes effect at the third endorsement |
-| `dao.roster` (3572) | Any council member | Full member list with version number, previous-version hash and the basis for each change | 3 endorsements; every change backed by a passed proposal, a leave or a key replacement |
-| `dao.rules` (3573) | Any council member | Rules with version number, previous-version hash and the passed proposal behind it | 3 endorsements; backed by a passed rules change |
+| `dao.genesis` (3570) | Founding council member | Initial config: name, rules, council identity keys, xpubs, descriptor, relays | Published by a key in its council; its hash is the DAO id; endorsed by 3 council identity keys |
+| `dao.endorse` (3571) | Council member (identity key) | Hash of a genesis, roster, settings, key replacement, tally or listing | Signer is on the council in effect; the object takes effect at the third endorsement |
+| `dao.roster` (3572) | Any council member | Full member list with version number, previous-version hash and the basis for each change | 3 endorsements; every change backed by a passed proposal (including a council change), a leave or a key replacement; two conflicting versions are disputed until the next version picks one |
+| `dao.settings` (3573) | Any council member | Rules, council keys, threshold and descriptor, with version number, previous-version hash and the passed proposal behind it | 3 endorsements; backed by a passed rules change, or a council change and its confirmed migration |
 | `dao.proposal` (3574) | Member | Type, title, summary, optional link with fingerprint, language, and a payload per type (payouts: recipient and outputs) | Signer is on the roster at publication; payload valid for its type |
 | `dao.confirm` (3575) | Payout recipient | Proposal id, the confirmed address, optional BIP-322 signature | Address is in the proposal's outputs |
 | `dao.vote` (3576) | Member | Proposal id, yes / no / abstain | Signer eligible; latest vote per member counts |
-| `dao.tally` (3577) | Council member | Proposal id, close time, roster and rules versions, votes counted and excluded with reasons, result | Published after the close; only one undisputed tally per proposal |
+| `dao.tally` (3577) | Council member | Proposal id, close time, roster and settings versions, votes counted and excluded with reasons, result, the proposal's number | Published after the close; only one undisputed tally per proposal |
 | `dao.verify` (3578) | Council member | Candidate key, in person or remote, short code | Short code matches the candidate key |
 | `dao.rekey` (3579) | Council member | Old key, new key, mode, short code | 3 endorsements; remote also needs a second council verification |
 | `dao.leave` (3580) | Member leaving | Empty | Signer is not on the council |
-| `dao.round` (3581) | Council member | Payout round: proposal ids, unsigned PSBT, fee rate and fee | PSBT outputs match exactly the passed proposals listed; change to the treasury; fee within the cap |
+| `dao.round` (3581) | Council member | Payout round: proposal ids, unsigned PSBT, fee rate and fee | PSBT outputs match exactly the passed proposals listed; change to the treasury; fee within the cap; no other round open unless this one spends one of its coins |
 | `dao.sign` (3582) | Council member (identity key) | Round id, partially signed PSBT or a decline with reason | Signature verifies against that member's treasury key |
 | `dao.receipt` (3583) | Any council member | Round id, txid, block height | Transaction confirmed on chain and matches the round |
 | `dao.anchor` (3584) | Any member | Digest of a closed decision, the event ids it covers, OpenTimestamps proof | Proof verifies against Bitcoin |

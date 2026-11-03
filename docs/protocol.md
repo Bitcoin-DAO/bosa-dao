@@ -69,6 +69,8 @@ An identity card is a member's paper backup of their identity key: one card each
 - The printed text beside the QR (never inside it) gives the DAO name, the member's pseudonym, their short code, "Council" for a council member, the print date, and a fixed fallback line naming where to find the DAO if its site stops working: the project dashboard and the council (for BOSA DAO: "If bosadao.it stops working, find the new address at btcdao.tech or ask a council member").
 - Council members keep the card apart from their SeedQR card. A council identity key gives one of the `threshold` endorsements any change needs and can never move funds, so one lost card is handled by a key replacement.
 
+Scanning accepts the payload in any letter case and ignores spaces and line breaks; printing always uses upper case.
+
 Restoring: the app scans the card, checks the `dao8` prefix matches this DAO, checks the secret is between 1 and n−1, derives the public key and shows its short code. It continues only if that key is on the current roster, or has a valid `dao.verify` for a candidate. It then registers a new passkey and publishes a `dao.keywrap` for it.
 
 ## 2. Kinds
@@ -80,7 +82,7 @@ All DAO events are **regular** events (kinds 1000–9999), so relays keep every 
 | 3570 | `dao.genesis` | Founding council member | 3.1 |
 | 3571 | `dao.endorse` | Council member | 3.2 |
 | 3572 | `dao.roster` | Council member | 3.3 |
-| 3573 | `dao.rules` | Council member | 3.4 |
+| 3573 | `dao.settings` | Council member | 3.4 |
 | 3574 | `dao.proposal` | Member | 4.1 |
 | 3575 | `dao.confirm` | Payout recipient | 4.2 |
 | 3576 | `dao.vote` | Member | 4.3 |
@@ -95,7 +97,7 @@ All DAO events are **regular** events (kinds 1000–9999), so relays keep every 
 | 3585 | `dao.listing` | Council member | 7.2 |
 | 3586 | `dao.keywrap` | Member | 5.4 |
 
-Compared with the spec v0.1 event table, this adds `dao.rules` (rules versions get their own event, like rosters), `dao.confirm` (recipient address confirmation), `dao.tally` (requirement S3), the three onboarding events and `dao.keywrap` (passkey-protected identity keys).
+Compared with the spec v0.1 event table, this adds `dao.settings` (versions of the rules, council and descriptor get their own event, like rosters), `dao.confirm` (recipient address confirmation), `dao.tally` (requirement S3), the three onboarding events and `dao.keywrap` (passkey-protected identity keys).
 
 ## 3. Foundation: genesis, endorsements, rosters, rules
 
@@ -109,7 +111,7 @@ Compared with the spec v0.1 event table, this adds `dao.rules` (rules versions g
 }
 ```
 
-Valid when `sha256(JCS(content)) == dao_id` and it is endorsed (`dao.endorse`, object `genesis`) by at least `threshold` of the council identity keys listed in the config itself.
+Valid when it is signed by a key listed in its own `council`, `sha256(JCS(content)) == dao_id`, and it is endorsed (`dao.endorse`, object `genesis`) by at least `threshold` of the council identity keys listed in the config itself.
 
 ### 3.2 `dao.endorse`
 
@@ -121,7 +123,7 @@ Valid when `sha256(JCS(content)) == dao_id` and it is endorsed (`dao.endorse`, o
 }
 ```
 
-`object` is one of `genesis`, `roster`, `rules`, `rekey`, `listing`. Valid when the signer is on the council in effect when the endorsed object was published, and `hash` matches the endorsed event's content. An object takes effect once it has `threshold` valid endorsements from distinct council members; its effective time is the `created_at` of the endorsement that completed the threshold.
+`object` is one of `genesis`, `roster`, `settings`, `rekey`, `tally`, `listing`. Valid when the signer is on the council in effect when the endorsed object was published, and `hash` matches the endorsed event's content. An object takes effect once it has `threshold` valid endorsements from distinct council members; its effective time is the `created_at` of the endorsement that completed the threshold.
 
 ### 3.3 `dao.roster`
 
@@ -137,20 +139,25 @@ Valid when `sha256(JCS(content)) == dao_id` and it is endorsed (`dao.endorse`, o
 }
 ```
 
-Rosters form a chain: each `prev` is the hash of the previous version, and version numbers increase by one. Version 1 is implied by the genesis config: its `council` plus its `founders`, all verified at the founding meeting (section 3.5). A roster version is valid only if every change from the previous version is justified by an item in `basis`: a passed and tallied add or remove proposal, a valid `dao.leave`, or an endorsed `dao.rekey`. Clients reject a roster that adds or drops anyone without a basis.
+Rosters form a chain: each `prev` is the hash of the previous version, and version numbers increase by one. Version 1 is implied by the genesis config: its `council` plus its `founders`, all verified at the founding meeting (section 3.5). A roster version is valid only if every change from the previous version is justified by an item in `basis`: a passed and tallied add, remove or change-council proposal (a council change only once its migration round has a receipt), a valid `dao.leave`, or an endorsed `dao.rekey`. Clients reject a roster that adds or drops anyone without a basis.
 
-### 3.4 `dao.rules`
+If two different versions with the same number each reach `threshold` endorsements (possible only if a council member endorses both), both are disputed: no change in either takes effect until the council endorses a next version whose `prev` names one of them. Clients flag every council member who endorsed both. The same rule applies to settings.
+
+### 3.4 `dao.settings`
 
 ```json
 {
   "version": 2,
-  "prev": "<sha256 of rules version 1 content>",
-  "basis": ["<id of the passed change_rules proposal>"],
-  "rules": { "votingPeriodDays": 7, "quorum": "1/3", "maxFeePerRoundSats": 5000, "...": "..." }
+  "prev": "<sha256 of settings version 1 content>",
+  "basis": ["<id of the passed change_rules or change_council proposal>", "<id of the migration's dao.receipt, for a council change>"],
+  "rules": { "votingPeriodDays": 7, "quorum": "1/3", "maxFeePerRoundSats": 5000, "...": "..." },
+  "council": [{"label": "Council 1", "identityKey": "<hex>", "fingerprint": "<8 hex>", "xpub": "<xpub>"}],
+  "threshold": 3,
+  "descriptor": "<treasury descriptor with checksum>"
 }
 ```
 
-Version 1 is the `rules` object of the genesis config. Same chain and basis rules as rosters.
+Settings hold everything about the DAO that can change by vote: the rules, the council's keys, the threshold and the treasury descriptor. Version 1 is taken from the genesis config. Same chain, basis and conflict rules as rosters. A rules change needs a passed and tallied `change_rules` proposal. A council change needs a passed and tallied `change_council` proposal plus the `dao.receipt` of its migration round; the new version names the new council, threshold and descriptor, and from its effective time payout rounds spend from the new descriptor.
 
 ### 3.5 Founding
 
@@ -195,10 +202,11 @@ Common fields: `type`, `title` (≤ 80 characters), `summary` (≤ 500 character
 | `change_rules` | `changes`: list of `{path, from, to}` |
 | `change_council` | `out_key`, `in_key`, `in_xpub`, `in_fingerprint`, `threshold`, `new_descriptor` |
 
-The human-readable number (`BOSA-0007`) is not in the event. Clients derive it by sorting all valid proposals by `created_at`, then by `id`, and numbering from 1, so every client shows the same numbers without a coordinator.
+The human-readable number (`BOSA-0007`) is not in the proposal event. Clients derive it by sorting all valid proposals by `created_at`, then by `id`, and numbering from 1, so every client shows the same numbers without a coordinator. The proposal's tally records the number (section 4.4), and from then on it never changes. A proposal dated before the most recently tallied proposal is rejected, so a backdated proposal can never renumber a closed one; one dated before an open proposal it arrived after is accepted and flagged as backdated.
 
 Valid when:
 - the signer is on the roster in effect at `created_at`;
+- its `created_at` is not earlier than that of the most recently tallied proposal;
 - the content matches the schema for its type;
 - for payouts, every address is valid for the DAO's network, is not a treasury address, and every amount is above the dust limit;
 - for `add_member`, every listed `dao.verify` is valid: one in-person verification, or two remote verifications by distinct council members, with the same `candidate_key`.
@@ -213,10 +221,10 @@ Valid when the address appears in the proposal's outputs. A payout whose recipie
 
 Tags: `["e", <proposal id>]`. Content: `{"choice": "yes" | "no" | "abstain"}`.
 
-- **Eligible voters:** members on the roster in effect when the proposal was published, minus anyone whose `dao.leave` or removal took effect before the close.
-- **Recipient exclusion:** for payouts to a member, that member's vote is not counted.
+- **Eligible voters:** members on the roster in effect when the proposal was published, minus anyone whose `dao.leave` or removal took effect before the close. Eligibility belongs to the person, not the key: after an endorsed `dao.rekey` the new key inherits the old key's eligibility and its latest vote, and may change it.
 - **Changing a vote:** the latest vote per member counts, by `created_at`, then by `id`.
-- **Close time:** proposal `created_at` + voting period, or earlier if the result can no longer change.
+- **Close time:** proposal `created_at` + voting period. There is no early close, because votes can change until then.
+- **Quorum:** the number of members casting a counted vote (abstain included) must reach the `quorum` fraction of eligible voters, rounded up. With 18 eligible voters and a quorum of 1/3, that is 6.
 
 ### 4.4 `dao.tally` (requirement S3)
 
@@ -225,14 +233,15 @@ Tags: `["e", <proposal id>]`. Content: `{"choice": "yes" | "no" | "abstain"}`.
   "proposal": "<proposal id>",
   "closed_at": 1762300800,
   "roster_version": 5,
-  "rules_version": 1,
+  "settings_version": 1,
+  "number": 7,
   "counted": ["<vote event id>", "..."],
   "excluded": [{"id": "<vote event id>", "reason": "late"}],
   "result": {"yes": 9, "no": 2, "abstain": 1, "quorum_met": true, "passed": true}
 }
 ```
 
-Tags: `["e", <proposal id>]`. Signed by a council member after the close. Exclusion reasons: `late`, `not_eligible`, `superseded`, `recipient`.
+Tags: `["e", <proposal id>]`. Signed by a council member after the close. Exclusion reasons: `late`, `not_eligible`, `superseded`. `number` is the proposal's number as derived in section 4.1; a tally whose number differs from that derivation at its `closed_at` is invalid.
 
 Nostr timestamps are chosen by the signer, so a vote could be backdated after the close. The tally settles which votes count: once published and anchored, clients use it instead of recounting. A client that holds a vote dated before `closed_at` that the tally neither counts nor excludes shows a warning on the proposal. A second, conflicting tally makes the proposal **disputed** until `threshold` council members endorse one tally (`dao.endorse`, object `tally`).
 
@@ -282,7 +291,10 @@ Every client that shows the round rebuilds the expected outputs and refuses to o
 - any other output is change to the treasury's change branch (`/1/*`) at an unused index;
 - inputs are unspent treasury outputs;
 - `fee_sat` matches the PSBT and is at most `maxFeePerRoundSats` from the rules (requirement S5);
-- for a `change_council` migration round, the single output pays the full balance, minus fee, to the first receive address of `new_descriptor`.
+- for a `change_council` migration round, the single output pays the full balance, minus fee, to the first receive address of `new_descriptor`;
+- no other round is open, unless this round spends at least one of the open round's inputs. A round is open from its publication until it has a receipt. Two rounds that share an input can never both confirm, so a replacement round is safe; once one confirms, the other is void.
+
+**Lapse:** a passed payout lapses if it has not been paid by the second round date (the 1st of the month, for BOSA DAO) after its tally. A lapsed payout can be proposed again.
 
 PSBT requirements, so hardware signers can verify everything: PSBT version 0; each input carries its `witness_utxo`, `witness_script` and `bip32_derivation` for all five keys; the change output carries its `witness_script` and `bip32_derivation` for all five keys. PSBTs move to and from SeedSigner as animated QR codes in the UR `crypto-psbt` format.
 
@@ -316,8 +328,8 @@ After a domain loss, members find the new address in two ways that do not depend
 
 A client rebuilds a DAO in this order, from events filtered by `#D` and from the chain:
 
-1. Verify the genesis event and its endorsements; load council, descriptor, relays and rules version 1.
-2. Follow the roster and rules chains, accepting each version only with a valid basis and enough endorsements.
+1. Verify the genesis event and its endorsements; load relays and settings version 1 (rules, council, threshold, descriptor).
+2. Follow the roster and settings chains, accepting each version only with a valid basis and enough endorsements.
 3. Collect proposals, confirmations, votes and tallies; derive proposal numbers and statuses.
 4. Apply verify, rekey and leave events to membership as of each moment that matters.
 5. Collect rounds, signatures and receipts; check each against the chain.
