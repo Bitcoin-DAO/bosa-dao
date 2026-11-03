@@ -150,7 +150,7 @@ If two different versions with the same number each reach `threshold` endorsemen
   "version": 2,
   "prev": "<sha256 of settings version 1 content>",
   "basis": ["<id of the passed change_rules or change_council proposal>", "<id of the migration's dao.receipt, for a council change>"],
-  "rules": { "votingPeriodDays": 7, "quorum": "1/3", "timezone": "Europe/Rome", "maxFeeRateSatVb": 20, "treasuryCapSats": 5000000, "...": "..." },
+  "rules": { "votingPeriodDays": 7, "quorum": "1/3", "timezone": "Europe/Rome", "maxFeeRateSatVb": 20, "charterSha256": "<sha256 of the binding charter text>", "treasuryCapSats": 5000000, "...": "..." },
   "closed": false,
   "council": [{"label": "Council 1", "identityKey": "<hex>", "fingerprint": "<8 hex>", "xpub": "<xpub>"}],
   "threshold": 3,
@@ -158,7 +158,7 @@ If two different versions with the same number each reach `threshold` endorsemen
 }
 ```
 
-Settings hold everything about the DAO that can change by vote: the rules, the council's keys, the threshold and the treasury descriptor. Version 1 is taken from the genesis config. Same chain, basis and conflict rules as rosters. A rules change needs a passed and tallied `change_rules` proposal. A council change needs a passed and tallied `change_council` proposal plus the `dao.receipt` of its migration round; the new version names the new council, threshold and descriptor, and from its effective time payout rounds spend from the new descriptor.
+Settings hold everything about the DAO that can change by vote: the rules, the council's keys, the threshold and the treasury descriptor. `rules.charterSha256` fixes which charter text is in force: the SHA-256 of the binding (Italian, for BOSA DAO) text as UTF-8. The app shows the charter and checks it against this hash; a charter change is a `change_rules` proposal that changes the hash. Version 1 is taken from the genesis config. Same chain, basis and conflict rules as rosters. A rules change needs a passed and tallied `change_rules` proposal. A council change needs a passed and tallied `change_council` proposal plus the `dao.receipt` of its migration round; the new version names the new council, threshold and descriptor, and from its effective time payout rounds spend from the new descriptor.
 
 ### 3.5 Founding
 

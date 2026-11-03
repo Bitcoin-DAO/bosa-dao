@@ -37,7 +37,9 @@ Any three council members together can move the treasury. Members cannot move mo
 1. Write down in a few sentences what the money is for and who can join. This becomes the DAO's description and the opening of its charter.
 2. Draft the founding charter: purpose, who may join, how members behave, what the money may and may not be used for, that votes and pseudonyms are public and permanent, and that members must be 18 or over. Members tick that they accept it when they join.
 
-> **Gap G-01.** No charter text or template exists yet, and neither does the "first wallet in 5 minutes" guide that members are pointed to. Both are needed before the first member joins.
+A draft charter exists, in Italian (binding) with an English translation, covering purpose, members, the council (including absence and death), the treasury, voting, payments, the public record, conduct, changes, closing and the trial. It still needs the founding meeting's values and a legal review. Its SHA-256 goes in the settings (`charterSha256`), so everyone can check which text is in force.
+
+> **Gap G-01.** The "first wallet in 5 minutes" guide that members are pointed to does not exist yet, and the charter needs its legal review before mainnet.
 
 ### 2.2 Choose the council and the founders
 
@@ -303,7 +305,7 @@ Every member of the signet DAO is listed as a founder at the mainnet founding me
 | A payment looks wrong on the SeedSigner | Nothing has been signed | Do not sign. Decline with the reason and tell the council |
 | Three council members collude | They can move the funds outside the app | It shows publicly as a payment with no round. Members can replace the council, but the money cannot be recovered. The cap limits the loss |
 
-> **Gap G-18.** There is no guidance for a council member's death or long incapacity, beyond changing the council. Their seed should not pass to their heirs: it is the DAO's key, not their property. The charter should say so, and the council should act on any absence of more than one round.
+A council member's seed belongs to the DAO and does not pass to their heirs. Each council member keeps a sealed note with their plate, without the seed, asking their family to contact the council; the council changes the key and has the plate and SeedQR card destroyed in front of a council member. Any absence of more than one round triggers a council change. (Resolved G-18, charter Article 4.)
 
 ## 10. Closing a DAO
 
@@ -321,7 +323,7 @@ A DAO is closed by a final proposal of type **Close the DAO**, decided by vote. 
 
 | Gap | Area | What was missing | Needed before | Status |
 | --- | --- | --- | --- | --- |
-| G-01 | Preparation | Charter text and the wallet guide | First member joins | Open |
+| G-01 | Preparation | Wallet guide; legal review of the drafted charter | First member joins | Partly resolved |
 | G-02 | Governance | Council alone can meet quorum in a small DAO | Accepted; review if membership stays small | Accepted |
 | G-03 | Preparation | Registrant of `bosadao.it` and how it passes on | Registering the domain | Open |
 | G-04 | Preparation | Static host, relay host, and who pays | Phase 1 | Open |
@@ -338,7 +340,7 @@ A DAO is closed by a final proposal of type **Close the DAO**, decided by vote. 
 | G-15 | Treasury | Retiring old keys after a council change; coins sent to an old treasury | First council change | Resolved |
 | G-16 | Software | Who approves updates and how members check the running version | Phase 1 | Resolved |
 | G-17 | Membership | Carrying members from the signet trial to mainnet | Mainnet founding | Resolved |
-| G-18 | Council | Death or long incapacity of a council member | Charter | Open |
+| G-18 | Council | Death or long incapacity of a council member | Charter | Resolved in the draft charter (Article 4.8) |
 | G-19 | Governance | Winding up a DAO | Charter | Resolved |
 
 Still open from the design and listed in [decisions.md](decisions.md): who sits on the BOSA DAO council and who the founders are; whether votes on payouts should be public by name; the event kind numbers; and the phase 1 checks (passkey support on members' phones, printing a card without a saved file, SeedSigner change verification, OpenTimestamps from the browser).
