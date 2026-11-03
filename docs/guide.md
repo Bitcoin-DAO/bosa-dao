@@ -37,7 +37,7 @@ Any three council members together can move the treasury. Members cannot move mo
 1. Write down in a few sentences what the money is for and who can join. This becomes the DAO's description and the opening of its charter.
 2. Draft the founding charter: purpose, who may join, how members behave, what the money may and may not be used for, that votes and pseudonyms are public and permanent, and that members must be 18 or over. Members tick that they accept it when they join.
 
-A draft charter exists, in Italian (binding) with an English translation, covering purpose, members, the council (including absence and death), the treasury, voting, payments, the public record, conduct, changes, closing and the trial. It still needs the founding meeting's values and a legal review. Its SHA-256 goes in the settings (`charterSha256`), so everyone can check which text is in force.
+A draft charter exists, in [Italian](charter.it.md) (binding) with an [English translation](charter.en.md), covering purpose, members, the council (including absence and death), the treasury, voting, payments, the public record, conduct, changes, closing and the trial. It still needs the founding meeting's values and a legal review. Its SHA-256 goes in the settings (`charterSha256`), so everyone can check which text is in force.
 
 > **Gap G-01.** The "first wallet in 5 minutes" guide that members are pointed to does not exist yet, and the charter needs its legal review before mainnet.
 

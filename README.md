@@ -26,6 +26,7 @@ All 19 screens are in [`design/`](design/README.md).
 | Path | What it holds |
 | --- | --- |
 | `docs/what-is-a-bitcoin-dao.md` | A plain-language introduction: what a Bitcoin DAO is, how it works, what it can be used for |
+| `docs/charter.it.md`, `docs/charter.en.md` | BOSA DAO's draft founding charter: Italian (binding) and English translation |
 | `docs/guide.md` | The step-by-step guide to founding and running a DAO, from preparation to closing, with a register of the gaps still open |
 | `docs/spec.md` | The full specification v0.2: roles, keys, onboarding (in person and remote), treasury, governance, proposal fields, payout rounds, event formats, threat model, security requirements, build plan |
 | `docs/protocol.md` | The protocol draft v1: every event's exact format, its validity rules, PSBT requirements and how a client rebuilds the DAO's state |
