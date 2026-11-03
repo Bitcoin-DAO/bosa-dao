@@ -4,7 +4,9 @@ import { usable, type SiteConfig } from './core/config';
 import { KIND, sign, template, type Event } from './core/events';
 import { rebuild, type DaoState, type Member } from './core/state';
 import { parseDescriptor } from './core/descriptor';
-import { loadTreasury, type TreasuryView } from './core/chain';
+import { broadcast, loadTreasury, txStatus, type TreasuryView } from './core/chain';
+import { finalizeRound } from './core/round';
+import type { RoundView } from './core/state';
 import { prfSalt, pubkeyOf, unwrapSecret, wrapSecret } from './core/identity';
 import { parseJson } from './core/util';
 import { query, publish, type PublishResult } from './lib/relays';
@@ -82,6 +84,47 @@ function derive(events: Event[], extra: Partial<AppState> = {}) {
 }
 
 const tallied = new Set<string>();
+const broadcasted = new Set<string>();
+const receipted = new Set<string>();
+
+const chainApis = () => usable(state.dao?.founded?.config.chainApi ?? []);
+
+/** Combine the round's signatures, finalise and broadcast. Anyone may do this; doing it twice is harmless. */
+export async function broadcastRound(r: RoundView): Promise<string> {
+  const psbts = r.signEvents.map(e => parseJson<{ psbt: string }>(e.content)!.psbt);
+  const { hex } = finalizeRound(psbts);
+  const txid = await broadcast(chainApis(), hex);
+  broadcasted.add(r.inspection!.txid);
+  void refreshTreasury();
+  return txid;
+}
+
+/** Council apps broadcast ready rounds and publish the receipt once the transaction confirms (protocol 6.2, 6.3). */
+async function autoRounds() {
+  const { dao, secret, isCouncil } = state;
+  if (!dao || !secret || !isCouncil) return;
+  for (const r of dao.rounds) {
+    if (r.status !== 'open' || !r.inspection) continue;
+    const txid = r.inspection.txid;
+    const st = await txStatus(chainApis(), txid);
+    if (!st && r.ready && !broadcasted.has(txid)) {
+      try {
+        await broadcastRound(r);
+      } catch {
+        /* someone else may have broadcast it, or the API is down: try again next sync */
+      }
+    }
+    if (st?.confirmed && st.block_height && !r.receipt && !receipted.has(txid)) {
+      receipted.add(txid);
+      try {
+        await signAndPublish(KIND.receipt, { txid, block_height: st.block_height }, [['e', r.event.id]]);
+        void refreshTreasury();
+      } catch {
+        receipted.delete(txid);
+      }
+    }
+  }
+}
 
 /** Council apps publish the final count of every closed proposal that has none (protocol 4.4). */
 async function autoTally() {
@@ -105,6 +148,10 @@ export async function init() {
     const site = (await r.json()) as SiteConfig;
     setState({ site, pending: await store.getPending(site.site) });
     await sync();
+    // Keep open pages current: votes, counts, signatures and receipts arrive from other phones.
+    setInterval(() => {
+      if (document.visibilityState === 'visible') void sync().catch(() => undefined);
+    }, 30000);
   } catch (e) {
     setState({ loading: false, loadError: String((e as Error).message ?? e) });
   }
@@ -125,7 +172,7 @@ export async function sync() {
   }
   derive(events, { identity, secret, loading: false, pending });
   if (daoId && !state.treasury) void refreshTreasury();
-  void autoTally();
+  void autoTally().then(autoRounds);
 }
 
 export async function refreshTreasury() {

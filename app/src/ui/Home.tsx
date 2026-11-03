@@ -5,6 +5,8 @@ import { Address, Footer, Header, Qr, go } from './parts';
 import { Join } from './Join';
 import { ProposalCard } from './Proposals';
 import { councilTodo } from './Council';
+import { roundDatesAfter } from '../core/time';
+import { proposalLabel, type RoundView } from '../core/state';
 
 export function Home() {
   const app = useApp();
@@ -18,6 +20,12 @@ export function Home() {
   const atCap = tr ? tr.balance >= cap : false;
   const explorer = (cfg.chainApi[0] ?? '').replace(/\/api\/?$/, '');
   const open = app.dao!.proposals.filter(p => p.status === 'open').reverse();
+  const round = app.dao!.rounds.find(r => r.status === 'open');
+  const waiting = app.dao!.proposals.filter(p => app.dao!.payments.get(p.event.id)?.status === 'waiting' && p.content.type === 'payout');
+  const waitingSats = waiting.reduce((s, p) => s + (p.content.payload.outputs as { amount_sat: number }[]).reduce((a, o) => a + o.amount_sat, 0), 0);
+  const nextRoundDate = new Intl.DateTimeFormat(app.lang === 'en' ? 'en-GB' : 'it-IT', { day: 'numeric', month: 'long', timeZone: current.rules.timezone })
+    .format(new Date(roundDatesAfter(app.dao!.now, current.rules.timezone, 1)[0] * 1000));
+  const paidRounds = new Map(app.dao!.rounds.filter(r => r.status === 'paid' && r.inspection).map(r => [r.inspection!.txid, r]));
   return (
     <>
       <Header />
@@ -63,6 +71,20 @@ export function Home() {
           </a>
         )}
 
+        {app.dao!.closed && <p class="warnbox">{t('home.closed', { dao: app.site!.name })}</p>}
+        {!app.dao!.closed && (round ? (
+          <a class="card tint" style="text-decoration:none;color:var(--teal-ink);gap:4px" href={`#/round/${round.event.id}`}>
+            <span class="small">{t('home.nextRound')}</span>
+            <div class="row"><strong style="font-size:18px">{t('home.roundOpen', { round: round.content.round, n: round.signatures.size, m: round.threshold })}</strong><span>{t('home.see')}</span></div>
+          </a>
+        ) : (
+          <div class="card tint" style="gap:4px;color:var(--teal-ink)">
+            <span class="small">{t('home.nextRound')}</span>
+            <strong style="font-size:22px">{nextRoundDate}</strong>
+            <span class="small">{t('home.nextRoundText', { n: waiting.length, sats: fmtSats(waitingSats) })}</span>
+          </div>
+        ))}
+
         <div class="row">
           <h2>{t('home.open')}</h2>
           <a href="#/proposals" style="font-weight:600;text-decoration:none">{t('home.all')}</a>
@@ -80,7 +102,7 @@ export function Home() {
                 {tr.movements.map(mv => (
                   <div class="row" style="align-items:flex-start">
                     <div class="stack" style="gap:2px">
-                      <strong>{mv.net >= 0 ? t('home.in') : t('home.out')}</strong>
+                      <strong>{mv.net >= 0 ? t('home.in') : paidRounds.has(mv.txid) ? roundTitle(paidRounds.get(mv.txid)!) : t('home.out')}</strong>
                       <span class="small">
                         {mv.time ? fmtDate(mv.time, false) : t('home.pending')}
                         {mv.net < 0 ? ` · ${t('home.feeIncl')}` : ''} ·{' '}
@@ -108,6 +130,12 @@ export function Home() {
       <Footer />
     </>
   );
+}
+
+function roundTitle(r: RoundView) {
+  const app = useApp();
+  const nums = r.content.proposals.map(id => app.dao!.proposals.find(p => p.event.id === id)).filter(Boolean).map(p => proposalLabel(app.site!.name, p!.number));
+  return `${t('home.roundLabel', { round: r.content.round })} · ${nums.join(', ')}`;
 }
 
 function Donate({ address }: { address: string }) {

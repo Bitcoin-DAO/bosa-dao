@@ -2,7 +2,7 @@
 
 The DAO's website: one static page that members open on their phones. It holds no keys that can move funds and talks only to the DAO's relays and its chain API. Everything it shows is rebuilt in the browser from signed events (`docs/protocol.md` section 8).
 
-**Stages 1 and 2 of the testnet4 prototype** (this version). Stage 1:
+**The testnet4 prototype, stages 1 to 3** (this version). Stage 1:
 
 - founder sign-up with a passkey and a random identity key, the short code and the founder QR code;
 - the council's setup page: basics, council (identity plus trial treasury key), founders, publish the genesis, endorsements;
@@ -22,7 +22,17 @@ Stage 2:
 - the council inbox: publishing and approving new member list and rules versions, approving key replacements, checking candidates;
 - the record of each proposal: every signed event behind it.
 
-Stage 3 adds payout rounds and signing, and council changes.
+Stage 3:
+
+- the next round date and the approved payouts waiting for it on the treasury page;
+- preparing a round (council): every approved, confirmed and unexpired payout, coins chosen largest first, the fee rate suggested by the chain API and capped by the rules, change back to the treasury;
+- checking a round on every phone before signing: outputs exactly the payouts, change and coins the treasury's own, fee within the cap, one open round at a time;
+- signing with the trial treasury key in the browser, or exporting the PSBT to Sparrow or Nunchuk and pasting it back signed; declining with a reason;
+- combining the signatures, finalising and broadcasting once the threshold is reached; council phones publish the receipt at the first confirmation;
+- payout statuses on each proposal (waiting, in a round, paid, lapsed) and the round named in the treasury's movements;
+- closing the DAO: the whole balance to the confirmed destination, then the final settings.
+
+Not yet: council changes (migration and sweep rounds) and SeedSigner signing with animated QR codes, which come with phase 2.
 
 For the trial, each council member's phone also creates a **test treasury key** (12 words, testnet4 only) and shares its xpub in the founder code. On the setup page any council key can be swapped for one from Sparrow, Nunchuk or SeedSigner (`[fingerprint/48h/1h/0h/2h]tpub…`). The mainnet DAO uses SeedSigner only.
 
@@ -30,7 +40,7 @@ For the trial, each council member's phone also creates a **test treasury key** 
 
 | Path | What it holds |
 | --- | --- |
-| `src/core/` | The protocol, with no browser code: canonical JSON, short codes, events, descriptors and addresses, identity keys and cards, rebuilding state, the treasury from an Esplora API. Unit tests in `core.test.ts` and `governance.test.ts` |
+| `src/core/` | The protocol, with no browser code: canonical JSON, short codes, events, descriptors and addresses, identity keys and cards, rebuilding state, the treasury from an Esplora API. Rounds in `round.ts`, round dates in `time.ts`. Unit tests in `core.test.ts`, `governance.test.ts` and `round.test.ts` |
 | `src/lib/` | Browser parts: passkeys (WebAuthn PRF), relays, QR drawing and scanning, IndexedDB storage |
 | `src/ui/` | The screens, following `design/mockups` |
 | `src/i18n.ts` | Italian and English text |
@@ -52,7 +62,7 @@ npm run build       # type check and build into dist/
 bash e2e/run.sh     # end to end (needs relay/ installed, Playwright with Chromium, ffmpeg)
 ```
 
-The end-to-end runs: founding with five council phones and two founders (one remote), the identity card's QR, funding the treasury in a mock chain API, signing out and back in, restoring on a new phone from the card, reading a card through a fake camera; then, in a second DAO with a two-minute voting period, a payout confirmed by its recipient, a rules change, a new member from sign-up to member list, a member leaving, and a lost key replaced by the council.
+The end-to-end runs: founding with five council phones and two founders (one remote), the identity card's QR, funding the treasury in a mock chain API, signing out and back in, restoring on a new phone from the card, reading a card through a fake camera; then, in a second DAO with a two-minute voting period, a payout confirmed by its recipient, a rules change, a new member from sign-up to member list, a member leaving, and a lost key replaced by the council; then, in a 2-of-3 DAO on a mock chain, a payout from proposal to round, two signatures, broadcast, receipt and the new balance, with the broadcast transaction checked independently by embit (`e2e/embit-check.py`).
 
 ## Deploy
 

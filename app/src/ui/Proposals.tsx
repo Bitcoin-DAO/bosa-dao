@@ -7,6 +7,7 @@ import { proposalLabel, type Choice, type Output, type ProposalView } from '../c
 import { formatShortCode, shortCode } from '../core/shortcode';
 import { parseJson } from '../core/util';
 import { Address, Footer, Header, errText, go } from './parts';
+import { PaymentLine } from './Round';
 
 export const typeLabel = (type: string) => t(`type.${type}` as 'type.payout');
 
@@ -143,6 +144,7 @@ export function ProposalDetail({ id }: { id: string }) {
           <p style="white-space:pre-wrap">{c.summary}</p>
           {c.link && <a href={c.link.url} target="_blank" rel="noopener noreferrer">{t('pd.link')} ↗</a>}
           <Payload p={p} />
+          {p.status === 'passed' && <PaymentLine id={p.event.id} />}
         </section>
 
         {p.addresses.length > 0 && (
