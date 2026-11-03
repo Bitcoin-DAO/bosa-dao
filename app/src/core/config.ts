@@ -1,6 +1,15 @@
 // The DAO config: the site's own file before founding, and the genesis config after.
 export type Network = 'testnet4' | 'mainnet';
 
+/** Every DAO goes through three stages, each its own DAO and build: practice and testnet are disposable. */
+export type Stage = 'practice' | 'testnet' | 'mainnet';
+export const stageOf = (c: { stage?: Stage; network: Network }): Stage => c.stage ?? (c.network === 'mainnet' ? 'mainnet' : 'testnet');
+export function stageError(c: { stage?: Stage; network: Network }): string | undefined {
+  const s = stageOf(c);
+  if (s === 'mainnet' && c.network !== 'mainnet') return 'a mainnet DAO must be on mainnet';
+  if (s !== 'mainnet' && c.network === 'mainnet') return `a ${s} DAO must be on testnet4`;
+}
+
 export interface CouncilEntry {
   label: string;
   identityKey: string; // hex x-only
@@ -32,6 +41,7 @@ export interface Rules {
 
 export interface DaoConfig {
   configVersion: number;
+  stage?: Stage;
   name: string;
   description: string;
   languages: string[];

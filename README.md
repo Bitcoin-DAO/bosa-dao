@@ -21,6 +21,8 @@ A SputnikDAO-style DAO on Bitcoin alone: members propose and vote, a council of 
 
 **Testnet4 prototype, stages 1–3 built.** The app (`app/`) covers founding, passkey sign-in, identity cards, the treasury page, proposals and votes, new members, leaving, key replacement, and payout rounds signed by the council and broadcast on testnet4. Next: the phase 1 gate, a real testnet4 payout run by five testers. The DAO relay runs on Cloudflare. The first instance is **BOSA DAO**, a proof of concept for a local bitcoin community in Bosa, Sardinia, starting with a trial on testnet4.
 
+Every DAO goes through three stages, each a separate DAO with its own tested build: a **practice** run on testnet4 with ten-minute votes, the **testnet** DAO with the real rules, and the **mainnet** DAO. The first two are thrown away. See [`docs/guide.md`](docs/guide.md#8-the-three-stages-practice-testnet-mainnet).
+
 Nothing here is ready for real funds.
 
 | Home and treasury | Proposals | Council signing |

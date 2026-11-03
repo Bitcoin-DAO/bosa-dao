@@ -111,10 +111,11 @@ export const allowedEventKinds = new Set<number>(
   Array.from({ length: 3586 - 3570 + 1 }, (_, i) => 3570 + i)
 );
 
-// btc-dao: every event must carry ["D", <dao_id>]. Leave empty until the
-// genesis exists (any 64-hex D tag is then accepted); after founding, set
-// it to the DAO id and redeploy.
-export const REQUIRED_DAO_ID = "";
+// btc-dao: every event must carry ["D", <dao_id>]. Leave the list empty until
+// a genesis exists (any 64-hex D tag is then accepted); after each founding,
+// add that DAO's id and redeploy. One relay can serve a DAO's practice and
+// testnet stages; the mainnet DAO has its own.
+export const ALLOWED_DAO_IDS: string[] = [];
 
 // Blocked words or phrases (case-insensitive)
 export const blockedContent = new Set<string>([]);
@@ -216,7 +217,7 @@ export function containsBlockedContent(event: NostrEvent): boolean {
 export function hasDaoTag(event: NostrEvent): boolean {
   return event.tags.some(t =>
     t[0] === "D" && typeof t[1] === "string" &&
-    (REQUIRED_DAO_ID ? t[1] === REQUIRED_DAO_ID : /^[0-9a-f]{64}$/.test(t[1]))
+    (ALLOWED_DAO_IDS.length ? ALLOWED_DAO_IDS.includes(t[1]) : /^[0-9a-f]{64}$/.test(t[1]))
   );
 }
 

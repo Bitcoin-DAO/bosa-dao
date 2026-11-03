@@ -1,6 +1,6 @@
 // Founder sign-up (protocol 3.5): name, key and passkey, show the code, wait, approve (council), protect.
 import { useEffect, useState } from 'preact/hooks';
-import { completeFounding, publishSigned, setState, sync, useApp } from '../app';
+import { completeFounding, passkeyName, publishSigned, setState, sync, useApp } from '../app';
 import { t } from '../i18n';
 import { newSecret, newTestTreasuryKey, pubkeyOf, type FounderCode } from '../core/identity';
 import { KIND, sign, template } from '../core/events';
@@ -97,7 +97,7 @@ function SignUp() {
       let credId: string | undefined;
       let prfSupported = false;
       if (passkeysAvailable()) {
-        const c = await createPasskey({ passkeyDomain: site.passkeyDomain, rpName: dao, userName: name.trim() });
+        const c = await createPasskey({ passkeyDomain: site.passkeyDomain, rpName: dao, userName: passkeyName(name.trim()) });
         credId = c.credId;
         prfSupported = c.prfSupported;
       }

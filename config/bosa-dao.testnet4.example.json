@@ -1,5 +1,6 @@
 {
   "configVersion": 1,
+  "stage": "testnet",
   "name": "BOSA DAO",
   "description": "Community bitcoin treasury for Bosa, Sardinia. Proof of concept.",
   "languages": ["it", "en"],

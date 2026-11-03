@@ -4,6 +4,7 @@ import { setLang, useApp } from '../app';
 import { t } from '../i18n';
 import { qrMatrix, startScanner, type Scanner } from '../lib/qr';
 import { rpId } from '../lib/passkey';
+import { stageOf } from '../core/config';
 import { cardPayload } from '../core/identity';
 import { shortCode, formatShortCode } from '../core/shortcode';
 import { fmtDate } from '../i18n';
@@ -42,7 +43,8 @@ export function Header(props: { sub?: string; tabs?: ComponentChildren }) {
           ))}
         </div>
       </header>
-      {site?.network !== 'mainnet' && <div class="banner">{t('banner.trial')}</div>}
+      {site && stageOf(site) === 'practice' && <div class="banner"><strong>{t('banner.practice')}</strong> {t('banner.practiceText')}</div>}
+      {site && stageOf(site) === 'testnet' && <div class="banner">{t('banner.trial')}</div>}
       {app.dao?.conflict && <div class="banner">{t('banner.conflict')}</div>}
       {dev && <div class="banner">{t('banner.devPasskey', { host: location.hostname, domain: site!.passkeyDomain })}</div>}
       {props.tabs}

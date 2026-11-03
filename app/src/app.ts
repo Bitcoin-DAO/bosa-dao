@@ -1,6 +1,6 @@
 // App state: the site file, the DAO rebuilt from relays, this device's identity, the treasury.
 import { useEffect, useState } from 'preact/hooks';
-import { usable, type SiteConfig } from './core/config';
+import { stageError, stageOf, usable, type SiteConfig } from './core/config';
 import { KIND, sign, template, type Event } from './core/events';
 import { rebuild, type DaoState, type Member } from './core/state';
 import { parseDescriptor } from './core/descriptor';
@@ -146,6 +146,8 @@ export async function init() {
     const r = await fetch('./dao.json', { cache: 'no-store' });
     if (!r.ok) throw new Error(`dao.json ${r.status}`);
     const site = (await r.json()) as SiteConfig;
+    const bad = stageError(site);
+    if (bad) throw new Error(bad);
     setState({ site, pending: await store.getPending(site.site) });
     await sync();
     // Keep open pages current: votes, counts, signatures and receipts arrive from other phones.
@@ -258,7 +260,7 @@ export async function restoreFromCard(secret: string, name: string): Promise<'wr
   const pubkey = pubkeyOf(secret);
   if (!state.dao?.members.some(m => m.key === pubkey)) throw new Error('not-member');
   const salt = prfSalt(daoId);
-  const created = await createPasskey({ passkeyDomain: site.passkeyDomain, rpName: site.name, userName: name, salt });
+  const created = await createPasskey({ passkeyDomain: site.passkeyDomain, rpName: site.name, userName: passkeyName(name), salt });
   const existing = await store.getIdentity(daoId);
   let prf = created.prf;
   if (!prf && created.prfSupported) prf = (await getPrf({ passkeyDomain: site.passkeyDomain, salt, credId: created.credId })).prf;
@@ -275,6 +277,12 @@ export async function restoreFromCard(secret: string, name: string): Promise<'wr
   derive(state.events, { identity, secret });
   await signAndPublish(KIND.keywrap, wrapped, [['c', credTagOf(created.credId)]]);
   return 'wrapped';
+}
+
+/** The name shown in the phone's passkey list: practice passkeys say so, since stages share a domain. */
+export function passkeyName(name: string): string {
+  const s = state.site ? stageOf(state.site) : 'testnet';
+  return s === 'practice' ? `${name} · ${state.site!.name} (${state.lang === 'en' ? 'practice' : 'prova generale'})` : `${name} · ${state.site?.name ?? ''}`;
 }
 
 export function signOut() {

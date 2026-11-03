@@ -1,6 +1,6 @@
 // Joining after the founding (role "candidate") and a new key after losing everything (role "rekey").
 import { useEffect, useState } from 'preact/hooks';
-import { completeFounding, setState, sync, useApp } from '../app';
+import { completeFounding, passkeyName, setState, sync, useApp } from '../app';
 import { t } from '../i18n';
 import { newSecret, pubkeyOf, type FounderCode } from '../core/identity';
 import { proposalLabel } from '../core/state';
@@ -154,7 +154,7 @@ function NewKey({ role }: { role: 'candidate' | 'rekey' }) {
       let credId: string | undefined;
       let prfSupported = false;
       if (passkeysAvailable()) {
-        const c = await createPasskey({ passkeyDomain: site.passkeyDomain, rpName: site.name, userName: name.trim() });
+        const c = await createPasskey({ passkeyDomain: site.passkeyDomain, rpName: site.name, userName: passkeyName(name.trim()) });
         credId = c.credId;
         prfSupported = c.prfSupported;
       }

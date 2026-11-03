@@ -9,7 +9,7 @@ All in `src/config.ts` unless noted:
 | Setting | Nosflare default | Here |
 | --- | --- | --- |
 | Event kinds | all | only 3570–3586 |
-| `D` tag | not checked | required on every event (new `hasDaoTag`, checked in `src/durable-object.ts`); any 64-hex value until `REQUIRED_DAO_ID` is set, then only the DAO id |
+| `D` tag | not checked | required on every event (new `hasDaoTag`, checked in `src/durable-object.ts`); any 64-hex value until `ALLOWED_DAO_IDS` has entries, then only those DAO ids |
 | Pay to relay | on | off |
 | Sign-in to read or write (NIP-42) | required | not required: anyone can read, any key can publish |
 | Pruning | deletes old events above 9 GB | off: every event is kept |
@@ -44,7 +44,7 @@ If Cloudflare's own builds fail (they timed out while initialising on the BOSA D
 
 ## After founding
 
-Once the genesis exists, set `REQUIRED_DAO_ID` in `src/config.ts` to the DAO id, run `npm run build` and commit. Cloudflare redeploys by itself.
+After each founding, add that DAO's id to `ALLOWED_DAO_IDS` in `src/config.ts`, run `npm run build` and commit. Cloudflare redeploys by itself. This relay serves BOSA DAO's practice and testnet stages; the mainnet DAO gets its own relay at `relay.bosadao.it`.
 
 ## Mainnet
 
