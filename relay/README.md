@@ -32,6 +32,15 @@ Tested locally with `wrangler dev`: a kind 3572 event with a `D` tag is saved an
 3. **Deploy**, then open the `workers.dev` address in a browser once: that creates the database tables. The page shows Nosflare's own landing page; the relay's details, read by Nostr clients, carry the BOSA DAO name.
 4. Put the address, as `wss://btc-dao-relay.<account>.workers.dev`, first in `relays` in the DAO config.
 
+### Or deploy from GitHub Actions
+
+If Cloudflare's own builds fail (they timed out while initialising on the BOSA DAO account), deploy with `.github/workflows/deploy-relay.yml` instead:
+
+1. In Cloudflare: My profile → API tokens → Create token → template "Edit Cloudflare Workers". Add the permission Account → D1 → Edit, limit it to the DAO's account, and create it.
+2. In GitHub, `btc-dao` → Settings → Secrets and variables → Actions, add two repository secrets: `CLOUDFLARE_API_TOKEN` (the token) and `CLOUDFLARE_ACCOUNT_ID` (the long id after `dash.cloudflare.com/` in the dashboard address).
+3. In Cloudflare, disconnect the worker's Git repository (Settings → Build), so the two don't both deploy.
+4. In GitHub, Actions → Deploy relay → Run workflow.
+
 ## After founding
 
 Once the genesis exists, set `REQUIRED_DAO_ID` in `src/config.ts` to the DAO id, run `npm run build` and commit. Cloudflare redeploys by itself.
