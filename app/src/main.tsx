@@ -18,6 +18,12 @@ import { Profile } from './ui/Profile';
 import { Members } from './ui/Members';
 import { Rules } from './ui/Rules';
 import { Header } from './ui/parts';
+import { ProposalDetail, Proposals } from './ui/Proposals';
+import { NewProposal } from './ui/NewProposal';
+import { Confirm } from './ui/Confirm';
+import { Candidate } from './ui/Candidate';
+import { Sponsor } from './ui/Sponsor';
+import { Council } from './ui/Council';
 
 const routes: Record<string, () => preact.JSX.Element> = {
   '/': Home,
@@ -28,6 +34,12 @@ const routes: Record<string, () => preact.JSX.Element> = {
   '/profile': Profile,
   '/members': Members,
   '/rules': Rules,
+  '/proposals': Proposals,
+  '/new': NewProposal,
+  '/sponsor': Sponsor,
+  '/council': Council,
+  '/candidate': () => <Candidate role="candidate" />,
+  '/lost': () => <Candidate role="rekey" />,
 };
 
 const currentPath = () => location.hash.replace(/^#/, '') || '/';
@@ -66,6 +78,8 @@ function App() {
       </div>
     );
   }
+  const param = path.match(/^\/(p|confirm)\/([0-9a-f]{64})$/);
+  if (param) return <div class="app">{param[1] === 'p' ? <ProposalDetail id={param[2]} /> : <Confirm id={param[2]} />}</div>;
   const Screen = routes[path] ?? Home;
   return <div class="app"><Screen /></div>;
 }

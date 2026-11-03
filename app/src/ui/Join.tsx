@@ -9,7 +9,6 @@ export function Join() {
   const dao = app.site!.name;
   const [msg, setMsg] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const [showNew, setShowNew] = useState(false);
 
   if (!app.daoId) {
     const pending = app.pending;
@@ -49,11 +48,11 @@ export function Join() {
         <h1>{t('join.title', { dao })}</h1>
         <p class="lead">{t('join.intro')}</p>
         <div class="note"><strong>{t('join.howTitle')}</strong> {t('join.how')}</div>
-        <button type="button" class="btn primary" onClick={() => setShowNew(true)}>{t('join.become')}</button>
-        {showNew && <p class="note">{t('join.newMembersSoon')}</p>}
+        <button type="button" class="btn primary" onClick={() => go('/candidate')}>{t('join.become')}</button>
         <button type="button" class="btn secondary" disabled={busy} onClick={doSignIn}>{t('join.signin')}</button>
         {msg && <p class="warnbox">{msg}</p>}
         <button type="button" class="btn link" onClick={() => go('/restore')}>{t('join.restore')}</button>
+        <button type="button" class="btn link" onClick={() => go('/lost')}>{t('join.lost')}</button>
         <button type="button" class="btn link" onClick={() => go('/')}>{t('join.view')}</button>
       </main>
       <Footer />

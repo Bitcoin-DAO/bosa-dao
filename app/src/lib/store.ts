@@ -7,6 +7,8 @@ const db = createStore('btc-dao', 'kv');
 /** A founder's sign-up, kept in this browser until the DAO is founded (protocol 3.5 step 2). */
 export interface PendingFounder {
   site: string;
+  /** founder: before the genesis; candidate: joining later; rekey: a new key for an existing member. */
+  role?: 'founder' | 'candidate' | 'rekey';
   name: string;
   secret: string;
   pubkey: string;
