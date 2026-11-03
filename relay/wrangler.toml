@@ -13,7 +13,7 @@ class_name = "RelayWebSocket"
 [[d1_databases]]
 binding = "RELAY_DATABASE"
 database_name = "bosa-dao-relay"
-database_id = "PASTE-D1-DATABASE-ID-HERE"
+database_id = "c759c9d9-a121-4a2d-9d80-8cca1cdf3f71"
 
 # Cron trigger for 24hr database maintenance
 [triggers]
