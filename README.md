@@ -1,6 +1,6 @@
-# BOSA DAO
+# UNO
 
-**This is BOSA DAO's own copy of [btc-dao](https://github.com/Bitcoin-DAO/btc-dao) for the testnet stage** (stage 2 of 3: practice, testnet, mainnet). It runs btc-dao 0.1.0. The site is at **https://bitcoin-dao.github.io/bosa-dao** and is built from `config/dao.json` by `.github/workflows/pages.yml`. Code changes are made in btc-dao and pulled in here; only `config/dao.json` and this note are BOSA DAO's own.
+**This is UNO's own copy of [btc-dao](https://github.com/Bitcoin-DAO/btc-dao) for the testnet stage** (stage 2 of 3: practice, testnet, mainnet). It runs btc-dao 0.1.0. The site is at **https://bitcoin-dao.github.io/uno-testnet** and is built from `config/dao.json` by `.github/workflows/pages.yml`. Code changes are made in btc-dao and pulled in here; only `config/dao.json`, the charter (`config/charter.it.md`, `config/charter.en.md`) and this note are UNO's own. The mainnet DAO that follows gets its name from its council.
 
 After the founding meeting, add `"daoId": "<the DAO id shown on the setup page>"` to `config/dao.json`.
 

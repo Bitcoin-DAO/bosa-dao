@@ -1,14 +1,14 @@
 {
   "configVersion": 1,
   "stage": "testnet",
-  "name": "BOSA DAO",
-  "description": "Tesoreria bitcoin della comunità di Bosa. Prova di concetto.",
+  "name": "UNO",
+  "description": "UNO: la prima DAO costruita con btc-dao, in prova su testnet4.",
   "languages": [
     "it",
     "en"
   ],
   "network": "testnet4",
-  "site": "https://bitcoin-dao.github.io/bosa-dao",
+  "site": "https://bitcoin-dao.github.io/uno-testnet",
   "passkeyDomain": "bitcoin-dao.github.io",
   "council": [
     {
